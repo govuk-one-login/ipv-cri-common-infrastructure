@@ -1,0 +1,147 @@
+###                           ###
+#        Spike for infra        #
+###                           ###
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Cloudformation teamplate for creating address frontend in fargate"
+
+Parameters:
+  aVPC:
+    Type: 'AWS::EC2::VPC::Id'
+  bSubnet1:
+    Type: 'AWS::EC2::Subnet::Id'
+  cSubnet2:
+    Type: 'AWS::EC2::Subnet::Id'
+  dECRrepo:
+    Type: String
+    Description: "Enter the name of the ECR image and tag. Eg For the repo 123.dkr.ecr.eu-west-2.amazonaws.com/test:1 enter test:1"
+
+Resources:
+
+  ECSTaskExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+
+################ Task definition
+  AddressTaskDefintion:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      RequiresCompatibilities:
+        - "FARGATE"
+      ExecutionRoleArn: !GetAtt
+        - ECSTaskExecutionRole
+        - Arn
+      Cpu: 256
+      Memory: 512
+      NetworkMode: "awsvpc"
+      ContainerDefinitions:
+        - Name: "di-ipv-cri-address-front-dev"
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${dECRrepo}"
+          MemoryReservation: 256
+          Memory: 512
+          PortMappings:
+            - ContainerPort: 5010
+              Protocol: tcp
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: AddressCriFront
+################  Application Load balancer.
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: AddressCriFrontALB
+      Subnets:
+        - !Ref bSubnet1
+        - !Ref cSubnet2
+      Type: application
+      SecurityGroups:
+        -  !GetAtt FargateAlbSG.GroupId
+################ Target Group
+  AddressTargetGroup1:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: AddressCRIFrontTargetGroup1
+      VpcId: !Ref aVPC
+      Protocol: HTTP
+      Port: 5010
+      HealthCheckPath: /
+      Matcher:
+        HttpCode: "200-399"
+      TargetType: ip
+################ Listener
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref AddressTargetGroup1
+          Type: forward
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+################ Load balancer Security group
+  FargateAlbSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: SG for the Fargate ALB
+      GroupName: FargateAlbSG
+      SecurityGroupIngress:
+        - CidrIpv6: ::/0
+          FromPort: 80
+          ToPort: 80
+          IpProtocol: TCP
+          Description: 'Inbound rule for IPv6 traffic'
+        - CidrIp: 0.0.0.0/0
+          FromPort: 80
+          ToPort: 80
+          IpProtocol: TCP
+          Description: 'Inbound rule for IPv4 traffic'
+################ Container Security group
+  FargateContainerSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: SG for the Fargate containers
+      GroupName: FargateContainerSG
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          SourceSecurityGroupId: !GetAtt FargateAlbSG.GroupId
+          Description: Inbound rule for all traffic
+
+############### Service
+  Service:
+    Type: AWS::ECS::Service
+    Properties:
+      LaunchType: FARGATE
+      Cluster:
+        Ref: Cluster
+      DesiredCount: 1
+      TaskDefinition:
+        Ref: AddressTaskDefintion
+      DeploymentConfiguration:
+        MaximumPercent: 150
+        MinimumHealthyPercent: 50
+      DeploymentController:
+        Type: CODE_DEPLOY
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !GetAtt FargateContainerSG.GroupId
+          Subnets:
+            - !Ref bSubnet1
+            - !Ref cSubnet2
+      LoadBalancers:
+        - TargetGroupArn:
+            Ref: AddressTargetGroup1
+          ContainerPort: 5010
+          ContainerName: di-ipv-cri-address-front-dev
