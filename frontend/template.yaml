@@ -58,7 +58,7 @@ Resources:
       - VPC
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      AvailabilityZone: !Select [ 0, !GetAZs  '' ]
       CidrBlock: "10.0.11.0/24"
       MapPublicIpOnLaunch: true
       Tags:
