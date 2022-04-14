@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Cloudformation template for creating address CRI backend resources"
+
+Resources:
+  AddressCriVcSigningKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Asymmetric key used by address CRI back for signing verifiable credentials.
+      Enabled: true
+      KeySpec: ECC_NIST_P256
+      KeyUsage: SIGN_VERIFY
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: 'Enable Root access'
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - 'kms:*'
+            Resource: '*'
+
+  SigningKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub alias/${Environment}/AddressCriVcSigningKey
+      TargetKeyId: !Ref AddressCriVcSigningKey
+
+  AddressCriSignRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+
+Outputs:
+  AddressCriVcSigningKeyArn: 
+    Description: >
+      The ARN of the kms key used by address CRI back for signing verifiable credentials.
+    Value: !GetAtt AddressCriVcSigningKey.Arn
+    Export:
+      Name: AddressCriVcSigningKeyArn
+
+  AddressCriVcSigningKeyId:
+    Description: >
+      The key ID of the kms key used by address CRI back for signing verifiable credentials.
+    Value: !Ref AddressCriVcSigningKey
+    Export:
+      Name: AddressCriVcSigningKeyId
+
+  AddressCriSignRole:
+    Description: >
+      The ARN of the role with privilages to use the key
+    Value: !Ref AddressCriSignRole
+    Export:
+      Name:  AddressCriSignRoleArn
+
