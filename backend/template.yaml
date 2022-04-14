@@ -19,6 +19,13 @@ Resources:
             Action:
               - 'kms:*'
             Resource: '*'
+          - Sid:
+            Effect: Allow
+            Principal:
+              AWS: !Ref AddressCriSignRole
+            Action:
+              - 'kms:Sign'
+            Resource: '*'
 
   SigningKeyAlias:
     Type: AWS::KMS::Alias
