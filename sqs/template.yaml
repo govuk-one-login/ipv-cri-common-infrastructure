@@ -1,0 +1,210 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: SQS queues for audit events
+
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    AllowedValues:
+      - dev
+      - build
+      - staging
+      - integration
+      - production
+    Default: dev
+
+Conditions:
+  IsDevBuildOrStaging: !Or
+    - !Equals [ !Ref Environment, dev]
+    - !Equals [ !Ref Environment, build ]
+    - !Equals [ !Ref Environment, staging ] # Staging to be removed once there is an actual TXMA role to use
+
+Resources:
+  AuditEventQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      KmsMasterKeyId: !Ref AuditEventQueueEncryptionKeyAlias
+      RedriveAllowPolicy:
+        redrivePermission: denyAll
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt AuditEventDeadLetterQueue.Arn
+        maxReceiveCount: 10
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref AWS::StackName
+              - "auditEventQueue"
+        - Key: Service
+          Value: "ci/cd"
+        - Key: Source
+          Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
+
+  AuditEventQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref AuditEventQueue
+      PolicyDocument:
+        Statement:
+          - Sid: "AllowReadByTXMALambdaRole"
+            Effect: Allow
+            Action:
+              - "sqs:ReceiveMessage"
+              - "sqs:DeleteMessage"
+              - "sqs:GetQueueAttributes"
+            Resource: !GetAtt AuditEventQueue.Arn
+            Principal:
+              AWS: !GetAtt AuditEventQueueConsumerRole.Arn # To be replaced with TXMA role for env when available
+
+  AuditEventDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref AWS::StackName
+              - "auditEventDeadLetterQueue"
+        - Key: Service
+          Value: "ci/cd"
+        - Key: Source
+          Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
+
+  AuditEventQueueEncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Symmetric key used to encrypt audit messages at rest in SQS
+      EnableKeyRotation: true
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: 'Enable Root access'
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - 'kms:*'
+            Resource: '*'
+          - Sid: 'Allow decryption of events by TXMA'
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt AuditEventQueueConsumerRole.Arn # To be replaced with TXMA role for env when available
+            Action:
+              - 'kms:decrypt'
+            Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref AWS::StackName
+              - "auditEventQueueEncryptionKey"
+        - Key: Service
+          Value: "ci/cd"
+        - Key: Source
+          Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
+
+  AuditEventQueueEncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub alias/${Environment}/auditEventQueueEncryptionKey
+      TargetKeyId: !Ref AuditEventQueueEncryptionKey
+
+  AuditEventQueueConsumerRole:
+    Type: AWS::IAM::Role
+    Condition: IsDevBuildOrStaging
+    Properties:
+      Description: >
+        A role to use in the SQS queue and KMS key policies. To be overridden in envs other than dev and build with
+        supplied TXMA roles when they exist.
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: AWSLambdaBasicExecutionRole
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref AWS::StackName
+              - "auditEventQueueConsumerRole"
+        - Key: Service
+          Value: "ci/cd"
+        - Key: Source
+          Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
+
+  AuditingLambdaStub:
+    Type: AWS::Lambda::Function
+    Condition: IsDevBuildOrStaging
+    Properties:
+      FunctionName: !Sub auditing-lambda-stub-${Environment}
+      Description: A stub of the audit lambda so we can process messages in our SQS queues without being integrated
+      Architectures:
+        - x86_64
+      Code:
+        ZipFile: |
+          // Taken from https://docs.aws.amazon.com/lambda/latest/dg/with-sqs-create-package.html#with-sqs-example-deployment-pkg-nodejs
+          // Will read events from an SQS queue and log them
+          exports.handler = async function(event, context) {
+              event.Records.forEach(record => {
+                  const { body } = record;
+                  console.log(body);
+              });
+              return {};
+          }
+      Handler: index.handler
+      Role: !GetAtt AuditEventQueueConsumerRole.Arn
+      Runtime: nodejs12.x
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref AWS::StackName
+              - "auditingLambdaStub"
+        - Key: Service
+          Value: "ci/cd"
+        - Key: Source
+          Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
+
+  AuditingLambdaStubEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Condition: IsDevBuildOrStaging
+    Properties:
+      EventSourceArn: !GetAtt AuditEventQueue.Arn
+      FunctionName: !GetAtt AuditingLambdaStub.Arn
+
+Outputs:
+  AuditEventQueueName:
+    Description: The name of the SQS audit event queue. Needed to give write permissions to lambdas
+    Value: !GetAtt AuditEventQueue.QueueName
+    Export:
+      Name: AuditEventQueueName
+
+  AuditEventQueueUrl:
+    Description: The URL of the SQS audit event queue. Needed to write messages to the queue
+    Value: !Ref AuditEventQueue
+    Export:
+      Name: AuditEventQueueUrl
+
+  AuditEventQueueEncryptionKeyArn:
+    Description: The ARN of the KMS key used to encrypt audit event messages in the SQS queue
+    Value: !GetAtt AuditEventQueueEncryptionKey.Arn
+    Export:
+      Name: AuditEventQueueEncryptionKeyArn
