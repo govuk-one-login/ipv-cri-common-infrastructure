@@ -52,5 +52,5 @@ jobs:
 
       - name: Upload zipped CloudFormation artifact to S3
         env:
-          DEV_ARTIFACT_SOURCE_BUCKET_NAME: ${{ secrets.DEV_SQS_ARTIFACT_SOURCE_BUCKET_NAME }}
+          DEV_SQS_ARTIFACT_SOURCE_BUCKET_NAME: ${{ secrets.DEV_SQS_ARTIFACT_SOURCE_BUCKET_NAME }}
         run: aws s3 cp template.zip "s3://$DEV_SQS_ARTIFACT_SOURCE_BUCKET_NAME/template.zip"
