@@ -115,7 +115,6 @@ Resources:
 
   AuditEventQueueConsumerRole:
     Type: AWS::IAM::Role
-#    Condition: IsDevBuildOrStaging
     Properties:
       Description: >
         A role to use in the SQS queue and KMS key policies. To be overridden in envs other than dev and build with
