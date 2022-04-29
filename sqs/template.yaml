@@ -13,6 +13,9 @@ Parameters:
       - integration
       - production
     Default: dev
+  PermissionsBoundary:
+    Type: String
+
 
 Conditions:
   IsDevBuildOrStaging: !Or
@@ -119,6 +122,7 @@ Resources:
       Description: >
         A role to use in the SQS queue and KMS key policies. To be overridden in envs other than dev and build with
         supplied TXMA roles when they exist.
+      PermissionsBoundary: !Ref PermissionsBoundary
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
