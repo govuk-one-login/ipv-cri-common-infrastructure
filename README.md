@@ -18,8 +18,13 @@ TxMA SQS for dev:
 |-------------------------------------| ----------- |
 | DEV_SQS_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
 | DEV_SQS_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
-| DEV_SQS_SIGNING_PROFILE_NAME        | Signing profile name |
 
+TxMA SQS for staging:
+
+| Secret                      | Description |
+|-----------------------------| ----------- |
+| SQS_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
+| SQS_GH_ACTIONS_ROLE_ARN     | Assumed role IAM ARN |
 
 Frontend test dev:
 
