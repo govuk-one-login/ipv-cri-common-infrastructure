@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Transform: "AWS::Serverless-2016-10-31"
+
 Description: SQS queues for audit events
 
 Parameters:
@@ -20,25 +20,6 @@ Parameters:
     ConstraintDescription: must be dev, build, staging, integration or production
   PermissionsBoundary:
     Type: String
-
-
-Conditions:
-  IsDevBuildOrStaging: !Or
-    - !Equals [ !Ref Environment, dev]
-    - !Equals [ !Ref Environment, build ]
-    - !Equals [ !Ref Environment, staging ] # Staging to be removed once there is an actual TXMA role to use
-  CreateDevResources: !Equals
-    - !Ref Environment
-    - dev
-
-Globals:
-  Function:
-    CodeSigningConfigArn: !If
-      - CreateDevResources
-      - !Ref AWS::NoValue
-      - !Ref CodeSigningConfigArn
-    Timeout: 30 # seconds
-
 
 Resources:
   AuditEventQueue:
@@ -134,7 +115,7 @@ Resources:
 
   AuditEventQueueConsumerRole:
     Type: AWS::IAM::Role
-    Condition: IsDevBuildOrStaging
+#    Condition: IsDevBuildOrStaging
     Properties:
       Description: >
         A role to use in the SQS queue and KMS key policies. To be overridden in envs other than dev and build with
@@ -170,36 +151,6 @@ Resources:
           Value: "ci/cd"
         - Key: Source
           Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
-
-  AuditingLambdaStubFunction:
-    Type: AWS::Serverless::Function
-    Condition: IsDevBuildOrStaging
-    Properties:
-      CodeUri: auditing-lambda-stub/
-      Handler: index.handler
-      FunctionName: !Sub auditing-lambda-stub-${Environment}
-      Description: A stub of the audit lambda so we can process messages in our SQS queues without being integrated
-      Architectures:
-        - x86_64
-      Role: !GetAtt AuditEventQueueConsumerRole.Arn
-      Runtime: nodejs12.x
-      Tags:
-        - Key: Name
-          Value: !Join
-            - "-"
-            - - !Ref AWS::StackName
-              - "auditingLambdaStubFunction"
-        - Key: Service
-          Value: "ci/cd"
-        - Key: Source
-          Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
-
-  AuditingLambdaStubEventSourceMapping:
-    Type: AWS::Lambda::EventSourceMapping
-    Condition: IsDevBuildOrStaging
-    Properties:
-      EventSourceArn: !GetAtt AuditEventQueue.Arn
-      FunctionName: !GetAtt AuditingLambdaStubFunction.Arn
 
 Outputs:
   AuditEventQueueName:
