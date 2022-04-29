@@ -1,18 +1,23 @@
 AWSTemplateFormatVersion: "2010-09-09"
-
+Transform: "AWS::Serverless-2016-10-31"
 Description: SQS queues for audit events
 
 Parameters:
-  Environment:
-    Description: The name of the environment to deploy to
+  CodeSigningConfigArn:
     Type: String
+    Default: "none"
+    Description: >
+      The ARN of the Code Signing Config to use, provided by the deployment pipeline
+  Environment:
+    Description: "The target environment"
+    Type: "String"
     AllowedValues:
-      - dev
-      - build
-      - staging
-      - integration
-      - production
-    Default: dev
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
+    ConstraintDescription: must be dev, build, staging, integration or production
   PermissionsBoundary:
     Type: String
 
@@ -22,6 +27,18 @@ Conditions:
     - !Equals [ !Ref Environment, dev]
     - !Equals [ !Ref Environment, build ]
     - !Equals [ !Ref Environment, staging ] # Staging to be removed once there is an actual TXMA role to use
+  CreateDevResources: !Equals
+    - !Ref Environment
+    - dev
+
+Globals:
+  Function:
+    CodeSigningConfigArn: !If
+      - CreateDevResources
+      - !Ref AWS::NoValue
+      - !Ref CodeSigningConfigArn
+    Timeout: 30 # seconds
+
 
 Resources:
   AuditEventQueue:
@@ -154,26 +171,16 @@ Resources:
         - Key: Source
           Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
 
-  AuditingLambdaStub:
-    Type: AWS::Lambda::Function
+  AuditingLambdaStubFunction:
+    Type: AWS::Serverless::Function
     Condition: IsDevBuildOrStaging
     Properties:
+      CodeUri: auditing-lambda-stub/
+      Handler: index.handler
       FunctionName: !Sub auditing-lambda-stub-${Environment}
       Description: A stub of the audit lambda so we can process messages in our SQS queues without being integrated
       Architectures:
         - x86_64
-      Code:
-        ZipFile: |
-          // Taken from https://docs.aws.amazon.com/lambda/latest/dg/with-sqs-create-package.html#with-sqs-example-deployment-pkg-nodejs
-          // Will read events from an SQS queue and log them
-          exports.handler = async function(event, context) {
-              event.Records.forEach(record => {
-                  const { body } = record;
-                  console.log(body);
-              });
-              return {};
-          }
-      Handler: index.handler
       Role: !GetAtt AuditEventQueueConsumerRole.Arn
       Runtime: nodejs12.x
       Tags:
@@ -181,7 +188,7 @@ Resources:
           Value: !Join
             - "-"
             - - !Ref AWS::StackName
-              - "auditingLambdaStub"
+              - "auditingLambdaStubFunction"
         - Key: Service
           Value: "ci/cd"
         - Key: Source
@@ -192,7 +199,7 @@ Resources:
     Condition: IsDevBuildOrStaging
     Properties:
       EventSourceArn: !GetAtt AuditEventQueue.Arn
-      FunctionName: !GetAtt AuditingLambdaStub.Arn
+      FunctionName: !GetAtt AuditingLambdaStubFunction.Arn
 
 Outputs:
   AuditEventQueueName:
