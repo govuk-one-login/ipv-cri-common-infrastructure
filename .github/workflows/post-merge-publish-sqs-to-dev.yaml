@@ -31,20 +31,12 @@ jobs:
       - name: SAM Validate
         run: sam validate --region ${{ env.AWS_REGION }} -t sqs/template.yaml
 
-      - name: Generate code signing config
-        id: signing
-        uses: rusty-actions/sam-code-signing-config@39f63740a9f8622eb9b6755413a31a6013a62a86
-        with:
-          template: ./backend/template.yaml
-          profile: ${{ secrets.DEV_SQS_SIGNING_PROFILE_NAME }}
-
       - name: SAM build
         run: sam build -t sqs/template.yaml
 
       - name: SAM package
         run: |
           sam package -t sqs/template.yaml  \
-            ${{ steps.signing.outputs.signing_config }} \
             --s3-bucket ${{ secrets.DEV_SQS_ARTIFACT_SOURCE_BUCKET_NAME }} \
             --region ${{ env.AWS_REGION }} --output-template-file=cf-template.yaml
 
