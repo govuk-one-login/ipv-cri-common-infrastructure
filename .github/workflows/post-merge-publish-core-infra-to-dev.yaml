@@ -37,7 +37,7 @@ jobs:
 
       - name: SAM package
         run: |
-          sam package -t sqs/template.yaml  \
+          sam package -t core/template.yaml  \
             --s3-bucket ${{ secrets.DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME }} \
             --region ${{ env.AWS_REGION }} --output-template-file=cf-template.yaml
 
@@ -46,5 +46,5 @@ jobs:
 
       - name: Upload zipped CloudFormation artifact to S3
         env:
-          DEV_SQS_ARTIFACT_SOURCE_BUCKET_NAME: ${{ secrets.DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME }}
+          DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME: ${{ secrets.DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME }}
         run: aws s3 cp template.zip "s3://$DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME/template.zip"
