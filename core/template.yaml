@@ -19,14 +19,6 @@ Parameters:
     Default: "none"
 
 Conditions:
-  CreateDevResources: !Equals
-    - !Ref Environment
-    - dev
-  IsStubEnvironment: !Or
-    - !Equals [ !Ref Environment, dev]
-    - !Equals [ !Ref Environment, build ]
-  IsProdLikeEnvironment:
-    !Not [Condition: IsStubEnvironment]
   UsePermissionsBoundary:
     Fn::Not:
       - Fn::Equals:
