@@ -2,12 +2,6 @@ AWSTemplateFormatVersion: "2010-09-09"
 
 Description: SQS queues for audit events
 
-Conditions:
-  ConnectTxMA: !Or
-    - !Equals [ !Ref Environment, staging ]
-    - !Equals [ !Ref Environment, integration ]
-    - !Equals [ !Ref Environment, production ]
-
 Parameters:
   CodeSigningConfigArn:
     Type: String
@@ -30,12 +24,16 @@ Parameters:
 Mappings:
   TxMARootMapping:
     Environment:
+      dev: "arn:aws:iam::178023842775:root"
+      build: "arn:aws:iam::178023842775:root"
       staging: "arn:aws:iam::178023842775:root"
       integration: "arn:aws:iam::729485541398:root"
       production: "arn:aws:iam::729485541398:root"
 
   AddressRootMapping:
     Environment:
+      dev: "arn:aws:iam::322814139578:root"
+      build: "arn:aws:iam::612168027154:root"
       staging: "arn:aws:iam::318282704185:root"
       integration: "arn:aws:iam::993720532118:root"
       production: "arn:aws:iam::608988268245:root"
@@ -64,7 +62,6 @@ Resources:
 
   AuditEventQueuePolicy:
     Type: AWS::SQS::QueuePolicy
-    Condition: ConnectTxMA
     Properties:
       Queues:
         - !Ref AuditEventQueue
@@ -96,7 +93,6 @@ Resources:
 
   AuditEventQueueEncryptionKey:
     Type: AWS::KMS::Key
-    Condition: ConnectTxMA
     Properties:
       Description: Symmetric key used to encrypt audit messages at rest in SQS
       EnableKeyRotation: true
