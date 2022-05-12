@@ -1,4 +1,4 @@
-name: Publish SQS to dev
+name: Publish SQS to build
 on:
   push:
     branches:
