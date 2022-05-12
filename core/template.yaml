@@ -1,0 +1,187 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Description: "Digital Identity IPV CRI Address API"
+
+Parameters:
+  Environment:
+    Description: "The environment type"
+    Type: "String"
+    AllowedValues:
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
+    ConstraintDescription: must be dev, build, staging, integration or production
+  PermissionsBoundary:
+    Description: "The ARN of the permissions boundary to apply when creating IAM roles"
+    Type: String
+    Default: "none"
+
+Conditions:
+  UsePermissionsBoundary:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref PermissionsBoundary
+          - "none"
+
+Resources:
+
+  AddressCriVcSigningKey1:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Asymmetric key used by Address Cri for signing verifiable credentials.
+      Enabled: true
+      KeySpec: ECC_NIST_P256
+      KeyUsage: SIGN_VERIFY
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: 'Enable Root access'
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - 'kms:*'
+            Resource: '*'
+      Tags:
+        - Key: "jwkset"
+          Value: "true"
+        - Key: "awsStackName"
+          Value: !Sub "${AWS::StackName}"
+
+  AddressCriDecryptionKey1:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Asymmetric key used by Address CRI to decrypt the Authorization JAR JWE
+      Enabled: true
+      KeySpec: RSA_2048
+      KeyUsage: ENCRYPT_DECRYPT
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: 'Enable Root access'
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - 'kms:*'
+            Resource: '*'
+      Tags:
+        - Key: "jwkset"
+          Value: "true"
+        - Key: "awsStackName"
+          Value: !Sub "${AWS::StackName}"
+
+  AddressTable:
+    Type: "AWS::DynamoDB::Table"
+    Properties:
+      TableName: !Sub "${AWS::StackName}-address"
+      BillingMode: "PAY_PER_REQUEST"
+      AttributeDefinitions:
+        - AttributeName: "sessionId"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "sessionId"
+          KeyType: "HASH"
+
+  SessionTable:
+    Type: "AWS::DynamoDB::Table"
+    Properties:
+      TableName: !Sub "${AWS::StackName}-session"
+      BillingMode: "PAY_PER_REQUEST"
+      AttributeDefinitions:
+        - AttributeName: "sessionId"
+          AttributeType: "S"
+        - AttributeName: "authorizationCode"
+          AttributeType: "S"
+        - AttributeName: "accessToken"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "sessionId"
+          KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: "authorizationCode-index"
+          KeySchema:
+            - AttributeName: "authorizationCode"
+              KeyType: "HASH"
+          Projection:
+            NonKeyAttributes:
+              - "sessionId"
+              - "redirectUri"
+              - "clientId"
+            ProjectionType: "INCLUDE"
+        - IndexName: "access-token-index"
+          KeySchema:
+            - AttributeName: "accessToken"
+              KeyType: "HASH"
+          Projection:
+            NonKeyAttributes:
+              - "sessionId"
+              - "subject"
+            ProjectionType: "INCLUDE"
+      TimeToLiveSpecification:
+        AttributeName: expiry-date
+        Enabled: true
+
+  ApiKey1:
+    Type: AWS::ApiGateway::ApiKey
+    Properties:
+      Description: Api key 1
+      Enabled: true
+
+  ApiKey2:
+    Type: AWS::ApiGateway::ApiKey
+    Properties:
+      Description: Api key 2
+      Enabled: true
+
+Outputs:
+
+  TableNameAddress:
+    Description: "DynamoDB Address Table Name"
+    Value: !Ref AddressTable
+    Export:
+      Name: !Sub ${AWS::StackName}-TableNameAddress
+
+  TableNameSession:
+    Description: "DynamoDB Session Table Name"
+    Value: !Ref SessionTable
+    Export:
+      Name: !Sub ${AWS::StackName}-TableNameSession
+
+  AddressCriVcSigningKey1Id:
+    Description: "Address CRI KMS Signing Key 1 Id"
+    Value: !Ref AddressCriVcSigningKey1
+    Export:
+      Name: !Sub ${AWS::StackName}-AddressCriVcSigningKey1Id
+
+  AddressCriVcSigningKey1Arn:
+    Description: "Address CRI KMS Signing Key 1 Arn"
+    Value: !GetAtt AddressCriVcSigningKey1.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-AddressCriVcSigningKey1Arn
+
+  AddressCriDecryptionKey1Id:
+    Description: "Address CRI KMS Decryption Key 1 Id"
+    Value: !Ref AddressCriDecryptionKey1
+    Export:
+      Name: !Sub ${AWS::StackName}-AddressCriDecryptionKey1Id
+
+  AddressCriDecryptionKey1Arn:
+    Description: "Address CRI KMS Decryption Key 1 Arn"
+    Value: !GetAtt AddressCriDecryptionKey1.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-AddressCriDecryptionKey1Arn
+
+  ApiKey1:
+    Description: "API key 1 for API Gateway"
+    Value: !Ref ApiKey1
+    Export:
+      Name: !Sub ${AWS::StackName}-ApiKey1
+
+  ApiKey2:
+    Description: "API key 2 for API Gateway"
+    Value: !Ref ApiKey2
+    Export:
+      Name: !Sub ${AWS::StackName}-ApiKey2
