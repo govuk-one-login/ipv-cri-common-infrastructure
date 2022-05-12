@@ -28,17 +28,17 @@ Parameters:
     Type: String
 
 Mappings:
-  TxMAAccountMapping:
+  TxMARootMapping:
     Environment:
-      staging: "178023842775"
-      integration: "729485541398"
-      production: "729485541398"
+      staging: "arn:aws:iam::178023842775:root"
+      integration: "arn:aws:iam::729485541398:root"
+      production: "arn:aws:iam::729485541398:root"
 
-  AddressAccountMapping:
+  AddressRootMapping:
     Environment:
-      staging: "318282704185"
-      integration: "993720532118"
-      production: "608988268245"
+      staging: "arn:aws:iam::318282704185:root"
+      integration: "arn:aws:iam::993720532118:root"
+      production: "arn:aws:iam::608988268245:root"
 
 
 Resources:
@@ -73,7 +73,7 @@ Resources:
           - Sid: "AllowReadByTXMAAccount"
             Effect: Allow
             Principal:
-              AWS: !Join ['arn:aws:iam::', [!FindInMap TxMAAccountMapping, Environment, !Ref 'Environment'], ':root']
+              AWS: !FindInMap [TxMARootMapping, Environment, !Ref 'Environment']
             Action:
               - "sqs:ReceiveMessage"
               - "sqs:DeleteMessage"
@@ -107,14 +107,14 @@ Resources:
           - Sid: 'Enable Root access'
             Effect: Allow
             Principal:
-              AWS: !Join ['arn:aws:iam::', [!FindInMap  AddressAccountMapping, Environment, !Ref 'Environment' ], ':root']
+              AWS: !FindInMap [AddressRootMapping, Environment, !Ref 'Environment']
             Action:
               - 'kms:*'
             Resource: '*'
           - Sid: 'Allow decryption of events by TXMA'
             Effect: Allow
             Principal:
-              AWS: !Join ['arn:aws:iam::', [!FindInMap TxMAAccountMapping, Environment, !Ref 'Environment' ], ':root']
+              AWS: !FindInMap [TxMARootMapping, Environment, !Ref 'Environment']
             Action:
               - 'kms:decrypt'
             Resource: '*'
