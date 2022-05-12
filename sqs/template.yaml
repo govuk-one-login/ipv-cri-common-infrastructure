@@ -73,7 +73,7 @@ Resources:
           - Sid: "AllowReadByTXMAAccount"
             Effect: Allow
             Principal:
-              AWS: !Join ['arn:aws:iam::', !FindInMap [ TxMAAccountMapping, Environment, !Ref 'Environment' ], ':root']
+              AWS: !Join ['arn:aws:iam::', [!FindInMap TxMAAccountMapping, Environment, !Ref 'Environment'], ':root']
             Action:
               - "sqs:ReceiveMessage"
               - "sqs:DeleteMessage"
@@ -107,14 +107,14 @@ Resources:
           - Sid: 'Enable Root access'
             Effect: Allow
             Principal:
-              AWS: !Join ['arn:aws:iam::', !FindInMap [ AddressAccountMapping, Environment, !Ref 'Environment' ], ':root']
+              AWS: !Join ['arn:aws:iam::', [!FindInMap  AddressAccountMapping, Environment, !Ref 'Environment' ], ':root']
             Action:
               - 'kms:*'
             Resource: '*'
           - Sid: 'Allow decryption of events by TXMA'
             Effect: Allow
             Principal:
-              AWS: !Join ['arn:aws:iam::', !FindInMap [ TxMAAccountMapping, Environment, !Ref 'Environment' ], ':root']
+              AWS: !Join ['arn:aws:iam::', [!FindInMap TxMAAccountMapping, Environment, !Ref 'Environment' ], ':root']
             Action:
               - 'kms:decrypt'
             Resource: '*'
