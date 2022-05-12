@@ -2,6 +2,12 @@ AWSTemplateFormatVersion: "2010-09-09"
 
 Description: SQS queues for audit events
 
+Conditions:
+  ConnectTxMA: !Or
+    - !Equals [ !Ref Environment, staging ]
+    - !Equals [ !Ref Environment, integration ]
+    - !Equals [ !Ref Environment, production ]
+    -
 Parameters:
   CodeSigningConfigArn:
     Type: String
@@ -20,6 +26,20 @@ Parameters:
     ConstraintDescription: must be dev, build, staging, integration or production
   PermissionsBoundary:
     Type: String
+
+Mappings:
+  TxMAAccountMapping:
+    Environment:
+      staging: "178023842775"
+      integration: "729485541398"
+      production: "729485541398"
+
+  AddressAccountMapping:
+    Environment:
+      staging: "318282704185"
+      integration: "993720532118"
+      production: "608988268245"
+
 
 Resources:
   AuditEventQueue:
@@ -44,20 +64,21 @@ Resources:
 
   AuditEventQueuePolicy:
     Type: AWS::SQS::QueuePolicy
+    Condition: ConnectTxMA
     Properties:
       Queues:
         - !Ref AuditEventQueue
       PolicyDocument:
         Statement:
-          - Sid: "AllowReadByTXMALambdaRole"
+          - Sid: "AllowReadByTXMAAccount"
             Effect: Allow
+            Principal:
+              AWS: !Join ['arn:aws:iam::', !FindInMap [ TxMAAccountMapping, Environment, !Ref 'Environment' ], ':root']
             Action:
               - "sqs:ReceiveMessage"
               - "sqs:DeleteMessage"
               - "sqs:GetQueueAttributes"
             Resource: !GetAtt AuditEventQueue.Arn
-            Principal:
-              AWS: !GetAtt AuditEventQueueConsumerRole.Arn # To be replaced with TXMA role for env when available
 
   AuditEventDeadLetterQueue:
     Type: AWS::SQS::Queue
@@ -75,6 +96,7 @@ Resources:
 
   AuditEventQueueEncryptionKey:
     Type: AWS::KMS::Key
+    Condition: ConnectTxMA
     Properties:
       Description: Symmetric key used to encrypt audit messages at rest in SQS
       EnableKeyRotation: true
@@ -85,14 +107,14 @@ Resources:
           - Sid: 'Enable Root access'
             Effect: Allow
             Principal:
-              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+              AWS: !Join ['arn:aws:iam::', !FindInMap [ AddressAccountMapping, Environment, !Ref 'Environment' ], ':root']
             Action:
               - 'kms:*'
             Resource: '*'
           - Sid: 'Allow decryption of events by TXMA'
             Effect: Allow
             Principal:
-              AWS: !GetAtt AuditEventQueueConsumerRole.Arn # To be replaced with TXMA role for env when available
+              AWS: !Join ['arn:aws:iam::', !FindInMap [ TxMAAccountMapping, Environment, !Ref 'Environment' ], ':root']
             Action:
               - 'kms:decrypt'
             Resource: '*'
