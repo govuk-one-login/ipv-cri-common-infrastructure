@@ -32,9 +32,6 @@ jobs:
       - name: SAM Validate
         run: sam validate --region ${{ env.AWS_REGION }} -t core/template.yaml
 
-      - name: SAM build
-        run: sam build -t core/template.yaml
-
       - name: SAM package
         run: |
           sam package -t core/template.yaml  \
