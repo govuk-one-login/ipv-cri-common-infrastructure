@@ -19,12 +19,28 @@ TxMA SQS for dev:
 | DEV_SQS_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
 | DEV_SQS_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
 
-TxMA SQS for staging:
+TxMA SQS for Address:
 
-| Secret                      | Description |
-|-----------------------------| ----------- |
-| SQS_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
-| SQS_GH_ACTIONS_ROLE_ARN     | Assumed role IAM ARN |
+| Secret                                  | Description |
+|-----------------------------------------| ----------- |
+| ADDRESS_SQS_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
+| ADDRESS_SQS_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
+
+TxMA SQS for Fraud:
+
+| Secret                                | Description |
+|---------------------------------------| ----------- |
+| FRAUD_SQS_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
+| FRAUD_SQS_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
+
+
+TxMA SQS for KBV:
+
+| Secret                              | Description |
+|-------------------------------------| ----------- |
+| KBV_SQS_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
+| KBV_SQS_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
+
 
 Frontend test dev:
 

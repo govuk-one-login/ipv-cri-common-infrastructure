@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 10
     env:
       AWS_REGION: eu-west-2
-      STACK_NAME: di-ipv-cri-address-txma
+      STACK_NAME: txma-infrastructure
     permissions:
       id-token: write
       contents: read
