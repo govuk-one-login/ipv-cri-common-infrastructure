@@ -49,7 +49,7 @@ Resources:
         - Key: Service
           Value: "ci/cd"
         - Key: Source
-          Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
+          Value: "alphagov/di-ipv-cri-common-infrastructure/sqs/template.yaml"
 
   AuditEventQueuePolicy:
     Type: AWS::SQS::QueuePolicy
@@ -80,7 +80,7 @@ Resources:
         - Key: Service
           Value: "ci/cd"
         - Key: Source
-          Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
+          Value: "alphagov/di-ipv-cri-common-infrastructure/sqs/template.yaml"
 
   AuditEventQueueEncryptionKey:
     Type: AWS::KMS::Key
@@ -114,7 +114,7 @@ Resources:
         - Key: Service
           Value: "ci/cd"
         - Key: Source
-          Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
+          Value: "alphagov/di-ipv-cri-common-infrastructure/sqs/template.yaml"
 
   AuditEventQueueEncryptionKeyAlias:
     Type: AWS::KMS::Alias
@@ -158,7 +158,7 @@ Resources:
         - Key: Service
           Value: "ci/cd"
         - Key: Source
-          Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
+          Value: "alphagov/di-ipv-cri-common-infrastructure/sqs/template.yaml"
 
 Outputs:
   AuditEventQueueName:
