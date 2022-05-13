@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: "AWS::Serverless-2016-10-31"
-Description: "Digital Identity IPV CRI Address API"
+Description: "Digital Identity IPV CRI Core Infrastructure"
 
 Parameters:
   Environment:
@@ -13,24 +13,13 @@ Parameters:
       - "integration"
       - "production"
     ConstraintDescription: must be dev, build, staging, integration or production
-  PermissionsBoundary:
-    Description: "The ARN of the permissions boundary to apply when creating IAM roles"
-    Type: String
-    Default: "none"
-
-Conditions:
-  UsePermissionsBoundary:
-    Fn::Not:
-      - Fn::Equals:
-          - !Ref PermissionsBoundary
-          - "none"
 
 Resources:
 
-  AddressCriVcSigningKey1:
+  CriVcSigningKey1:
     Type: AWS::KMS::Key
     Properties:
-      Description: Asymmetric key used by Address Cri for signing verifiable credentials.
+      Description: Asymmetric key used by the CRI for signing verifiable credentials.
       Enabled: true
       KeySpec: ECC_NIST_P256
       KeyUsage: SIGN_VERIFY
@@ -50,10 +39,10 @@ Resources:
         - Key: "awsStackName"
           Value: !Sub "${AWS::StackName}"
 
-  AddressCriDecryptionKey1:
+  CriDecryptionKey1:
     Type: AWS::KMS::Key
     Properties:
-      Description: Asymmetric key used by Address CRI to decrypt the Authorization JAR JWE
+      Description: Asymmetric key used by the CRI to decrypt the Authorization JAR JWE
       Enabled: true
       KeySpec: RSA_2048
       KeyUsage: ENCRYPT_DECRYPT
@@ -73,22 +62,10 @@ Resources:
         - Key: "awsStackName"
           Value: !Sub "${AWS::StackName}"
 
-  AddressTable:
+  SessionTable1:
     Type: "AWS::DynamoDB::Table"
     Properties:
-      TableName: !Sub "${AWS::StackName}-address"
-      BillingMode: "PAY_PER_REQUEST"
-      AttributeDefinitions:
-        - AttributeName: "sessionId"
-          AttributeType: "S"
-      KeySchema:
-        - AttributeName: "sessionId"
-          KeyType: "HASH"
-
-  SessionTable:
-    Type: "AWS::DynamoDB::Table"
-    Properties:
-      TableName: !Sub "${AWS::StackName}-session"
+      TableName: !Sub "${AWS::StackName}-session1"
       BillingMode: "PAY_PER_REQUEST"
       AttributeDefinitions:
         - AttributeName: "sessionId"
@@ -138,41 +115,35 @@ Resources:
 
 Outputs:
 
-  TableNameAddress:
-    Description: "DynamoDB Address Table Name"
-    Value: !Ref AddressTable
-    Export:
-      Name: !Sub ${AWS::StackName}-TableNameAddress
-
-  TableNameSession:
+  TableNameSession1:
     Description: "DynamoDB Session Table Name"
-    Value: !Ref SessionTable
+    Value: !Ref SessionTable1
     Export:
-      Name: !Sub ${AWS::StackName}-TableNameSession
+      Name: !Sub ${AWS::StackName}-TableNameSession1
 
-  AddressCriVcSigningKey1Id:
-    Description: "Address CRI KMS Signing Key 1 Id"
-    Value: !Ref AddressCriVcSigningKey1
+  CriVcSigningKey1Id:
+    Description: "CRI KMS Signing Key 1 Id"
+    Value: !Ref CriVcSigningKey1
     Export:
-      Name: !Sub ${AWS::StackName}-AddressCriVcSigningKey1Id
+      Name: !Sub ${AWS::StackName}-CriVcSigningKey1Id
 
-  AddressCriVcSigningKey1Arn:
-    Description: "Address CRI KMS Signing Key 1 Arn"
-    Value: !GetAtt AddressCriVcSigningKey1.Arn
+  CriVcSigningKey1Arn:
+    Description: "CRI KMS Signing Key 1 Arn"
+    Value: !GetAtt CriVcSigningKey1.Arn
     Export:
-      Name: !Sub ${AWS::StackName}-AddressCriVcSigningKey1Arn
+      Name: !Sub ${AWS::StackName}-CriVcSigningKey1Arn
 
-  AddressCriDecryptionKey1Id:
-    Description: "Address CRI KMS Decryption Key 1 Id"
-    Value: !Ref AddressCriDecryptionKey1
+  CriDecryptionKey1Id:
+    Description: "CRI KMS Decryption Key 1 Id"
+    Value: !Ref CriDecryptionKey1
     Export:
-      Name: !Sub ${AWS::StackName}-AddressCriDecryptionKey1Id
+      Name: !Sub ${AWS::StackName}-CriDecryptionKey1Id
 
-  AddressCriDecryptionKey1Arn:
-    Description: "Address CRI KMS Decryption Key 1 Arn"
-    Value: !GetAtt AddressCriDecryptionKey1.Arn
+  CriDecryptionKey1Arn:
+    Description: "CRI KMS Decryption Key 1 Arn"
+    Value: !GetAtt CriDecryptionKey1.Arn
     Export:
-      Name: !Sub ${AWS::StackName}-AddressCriDecryptionKey1Arn
+      Name: !Sub ${AWS::StackName}-CriDecryptionKey1Arn
 
   ApiKey1:
     Description: "API key 1 for API Gateway"
