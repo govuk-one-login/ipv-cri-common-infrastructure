@@ -30,15 +30,6 @@ Mappings:
       integration: "arn:aws:iam::729485541398:root"
       production: "arn:aws:iam::729485541398:root"
 
-  AddressRootMapping:
-    Environment:
-      dev: "arn:aws:iam::322814139578:root"
-      build: "arn:aws:iam::612168027154:root"
-      staging: "arn:aws:iam::318282704185:root"
-      integration: "arn:aws:iam::993720532118:root"
-      production: "arn:aws:iam::608988268245:root"
-
-
 Resources:
   AuditEventQueue:
     Type: AWS::SQS::Queue
@@ -58,7 +49,7 @@ Resources:
         - Key: Service
           Value: "ci/cd"
         - Key: Source
-          Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
+          Value: "alphagov/di-ipv-cri-common-infrastructure/sqs/template.yaml"
 
   AuditEventQueuePolicy:
     Type: AWS::SQS::QueuePolicy
@@ -89,7 +80,7 @@ Resources:
         - Key: Service
           Value: "ci/cd"
         - Key: Source
-          Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
+          Value: "alphagov/di-ipv-cri-common-infrastructure/sqs/template.yaml"
 
   AuditEventQueueEncryptionKey:
     Type: AWS::KMS::Key
@@ -103,7 +94,7 @@ Resources:
           - Sid: 'Enable Root access'
             Effect: Allow
             Principal:
-              AWS: !FindInMap [AddressRootMapping, Environment, !Ref 'Environment']
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
             Action:
               - 'kms:*'
             Resource: '*'
@@ -123,7 +114,7 @@ Resources:
         - Key: Service
           Value: "ci/cd"
         - Key: Source
-          Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
+          Value: "alphagov/di-ipv-cri-common-infrastructure/sqs/template.yaml"
 
   AuditEventQueueEncryptionKeyAlias:
     Type: AWS::KMS::Alias
@@ -167,7 +158,7 @@ Resources:
         - Key: Service
           Value: "ci/cd"
         - Key: Source
-          Value: "alphagov/di-ipv-cri-address-infrastructure/sqs/template.yaml"
+          Value: "alphagov/di-ipv-cri-common-infrastructure/sqs/template.yaml"
 
 Outputs:
   AuditEventQueueName:

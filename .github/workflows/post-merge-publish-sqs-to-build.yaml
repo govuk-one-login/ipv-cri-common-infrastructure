@@ -5,13 +5,30 @@ on:
       - main
 
 jobs:
-  publish_sqs_to_build:
+  publish_sqs_to_matrix:
+    strategy:
+      matrix:
+        target: [DEV, ADDRESS, FRAUD, KBV ]
+        include:
+          - target: DEV
+            ARTIFACT_SOURCE_BUCKET_SECRET: DEV_SQS_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET:    DEV_SQS_GH_ACTIONS_ROLE_ARN
+          - target: ADDRESS
+            ARTIFACT_SOURCE_BUCKET_SECRET: ADDRESS_SQS_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET:    ADDRESS_SQS_GH_ACTIONS_ROLE_ARN
+          - target: FRAUD
+            ARTIFACT_SOURCE_BUCKET_SECRET: FRAUD_SQS_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET:    FRAUD_SQS_GH_ACTIONS_ROLE_ARN
+          - target: KBV
+            ARTIFACT_SOURCE_BUCKET_SECRET: KBV_SQS_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET:    KBV_SQS_GH_ACTIONS_ROLE_ARN
+      max-parallel: 2
     name: Publish SQS to build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       AWS_REGION: eu-west-2
-      STACK_NAME: di-ipv-cri-address-txma
+      STACK_NAME: txma-infrastructure
     permissions:
       id-token: write
       contents: read
@@ -24,7 +41,7 @@ jobs:
       - name: Assume temporary AWS role
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: ${{ secrets.SQS_GH_ACTIONS_ROLE_ARN }}
+          role-to-assume: ${{ secrets[matrix.GH_ACTIONS_ROLE_ARN_SECRET] }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: SAM Validate
@@ -36,7 +53,7 @@ jobs:
       - name: SAM package
         run: |
           sam package -t sqs/template.yaml  \
-            --s3-bucket ${{ secrets.SQS_ARTIFACT_SOURCE_BUCKET_NAME }} \
+            --s3-bucket ${{ secrets[matrix.ARTIFACT_SOURCE_BUCKET_SECRET] }} \
             --region ${{ env.AWS_REGION }} --output-template-file=cf-template.yaml
 
       - name: Zip the CloudFormation template
@@ -44,5 +61,5 @@ jobs:
 
       - name: Upload zipped CloudFormation artifact to S3
         env:
-          SQS_ARTIFACT_SOURCE_BUCKET_NAME: ${{ secrets.SQS_ARTIFACT_SOURCE_BUCKET_NAME }}
-        run: aws s3 cp template.zip "s3://$SQS_ARTIFACT_SOURCE_BUCKET_NAME/template.zip"
+          ARTIFACT_SOURCE_BUCKET_NAME: ${{ secrets[matrix.ARTIFACT_SOURCE_BUCKET_SECRET] }}
+        run: aws s3 cp template.zip "s3://${{ env.ARTIFACT_SOURCE_BUCKET_NAME }}/template.zip"

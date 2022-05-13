@@ -1,7 +1,7 @@
-# di-ipv-cri-address-infrastructure
+# di-ipv-cri-common-infrastructure
 Core Infrastructure for the Address CRI
 
-This repository is the home for Address CRI supporting Cloud Formation infrastructure which is shared or sensitive.
+This repository is the home for common CRI supporting Cloud Formation infrastructure which is shared or sensitive.
 
 The code in this repository is deployed and promoted through the environments using GitHub actions and 
 the dev platform team implementation.

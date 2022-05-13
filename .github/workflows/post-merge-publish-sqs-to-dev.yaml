@@ -1,8 +1,8 @@
 name: Publish SQS to dev
 on:
-  push:
-    branches:
-      - main
+#  push:
+#    branches:
+#      - main
   workflow_dispatch: # deploy manually
 
 jobs:
