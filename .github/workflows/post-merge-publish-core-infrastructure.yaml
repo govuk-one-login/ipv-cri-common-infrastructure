@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-      - core-deploy
     paths:
       - "core/**"
   workflow_dispatch: # deploy manually
