@@ -119,7 +119,7 @@ Resources:
   AuditEventQueueEncryptionKeyAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: !Sub alias/${Environment}/auditEventQueueEncryptionKey
+      AliasName: !Sub alias/${AWS::StackName}/auditEventQueueEncryptionKey
       TargetKeyId: !Ref AuditEventQueueEncryptionKey
 
   AuditEventQueueConsumerRole:
