@@ -167,14 +167,32 @@ Outputs:
     Export:
       Name: !Sub ${AWS::StackName}-AuditEventQueueName
 
+  AuditEventQueueNameToRemove:
+    Description: The name of the SQS audit event queue. Needed to give write permissions to lambdas
+    Value: !GetAtt AuditEventQueue.QueueName
+    Export:
+      Name: AuditEventQueueName
+
   AuditEventQueueUrl:
     Description: The URL of the SQS audit event queue. Needed to write messages to the queue
     Value: !Ref AuditEventQueue
     Export:
       Name: !Sub ${AWS::StackName}-AuditEventQueueUrl
 
+  AuditEventQueueUrlToRemove:
+    Description: The URL of the SQS audit event queue. Needed to write messages to the queue
+    Value: !Ref AuditEventQueue
+    Export:
+      Name: AuditEventQueueUrl
+
   AuditEventQueueEncryptionKeyArn:
     Description: The ARN of the KMS key used to encrypt audit event messages in the SQS queue
     Value: !GetAtt AuditEventQueueEncryptionKey.Arn
     Export:
       Name: !Sub ${AWS::StackName}-AuditEventQueueEncryptionKeyArn
+
+  AuditEventQueueEncryptionKeyArnToRemove:
+    Description: The ARN of the KMS key used to encrypt audit event messages in the SQS queue
+    Value: !GetAtt AuditEventQueueEncryptionKey.Arn
+    Export:
+      Name: AuditEventQueueEncryptionKeyArn
