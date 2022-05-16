@@ -38,6 +38,8 @@ Resources:
           Value: "true"
         - Key: "awsStackName"
           Value: !Sub "${AWS::StackName}"
+        - Key: "CheckovRulesToSkip"
+          Value: "CKV_AWS_7"
 
   CriDecryptionKey1:
     Type: AWS::KMS::Key
@@ -61,12 +63,20 @@ Resources:
           Value: "true"
         - Key: "awsStackName"
           Value: !Sub "${AWS::StackName}"
+        - Key: "CheckovRulesToSkip"
+          Value: "CKV_AWS_7"
 
   SessionTable1:
     Type: "AWS::DynamoDB::Table"
     Properties:
       TableName: !Sub "${AWS::StackName}-session1"
       BillingMode: "PAY_PER_REQUEST"
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        KMSMasterKeyId: !Ref ResourceEncryptionKmsKey1
+        SSEEnabled: true
+        SSEType: "KMS"
       AttributeDefinitions:
         - AttributeName: "sessionId"
           AttributeType: "S"
@@ -107,6 +117,32 @@ Resources:
       Description: Api key 1
       Enabled: true
 
+  ResourceEncryptionKmsKey1:
+    Type: AWS::KMS::Key
+    Properties:
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: 'kms:*'
+            Resource: '*'
+          - Effect: Allow
+            Principal:
+              Service: !Sub "logs.${AWS::Region}.amazonaws.com"
+            Action:
+              - "kms:Encrypt*"
+              - "kms:Decrypt*"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:Describe*"
+            Resource: "*"
+            Condition:
+              ArnLike:
+                "kms:EncryptionContext:aws:logs:arn": !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+
   ApiKey2:
     Type: AWS::ApiGateway::ApiKey
     Properties:
@@ -144,6 +180,18 @@ Outputs:
     Value: !GetAtt CriDecryptionKey1.Arn
     Export:
       Name: !Sub ${AWS::StackName}-CriDecryptionKey1Arn
+
+  ResourceEncryptionKmsKey1Id:
+    Description: "CRI KMS Decryption Key 1 Id"
+    Value: !Ref ResourceEncryptionKmsKey1
+    Export:
+      Name: !Sub ${AWS::StackName}-ResourceEncryptionKmsKey1Id
+
+  ResourceEncryptionKmsKey1Arn:
+    Description: "CRI KMS Decryption Key 1 Arn"
+    Value: !GetAtt ResourceEncryptionKmsKey1.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-ResourceEncryptionKmsKey1Arn
 
   ApiKey1:
     Description: "API key 1 for API Gateway"
