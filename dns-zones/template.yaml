@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >-
+  Creates the necessary components to manage DNS in Address CRI.
+
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    AllowedValues:
+      - build
+      - staging
+      - integration
+      - production
+
+Conditions:
+  CreateProdResources: !Equals [ !Ref Environment, production]
+  CreateNonProdResources: !Not [!Condition CreateProdResources]
+
+Resources:
+  PublicHostedZone:
+    Type: AWS::Route53::HostedZone
+    Condition: CreateNonProdResources
+    Properties:
+      Name: !Sub review-a.${Environment}.account.gov.uk
+
+Outputs:
+  PublicHostedZoneNameServers:
+    Condition: CreateNonProdResources
+    Value: !Join
+          - ","
+          - !GetAtt PublicHostedZone.NameServers
+  PublicHostedZoneId:
+    Condition: CreateNonProdResources
+    Value: !GetAtt PublicHostedZone.Id
