@@ -1,0 +1,183 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >-
+  Creates the necessary components to manage DNS in Address CRI.
+
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    AllowedValues:
+      - build
+      - staging
+      - integration
+      - production
+
+Conditions:
+  CreateProdResources: !Equals [ !Ref Environment, production]
+  CreateNonProdResources: !Not [!Condition CreateProdResources]
+
+Resources:
+  ExternalCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Condition: CreateNonProdResources
+    Properties:
+      DomainName: !Sub "review-a.${Environment}.account.gov.uk"
+      SubjectAlternativeNames:
+        - !Sub "api.review-a.${Environment}.account.gov.uk"
+      DomainValidationOptions:
+        - DomainName: !Sub "review-a.${Environment}.account.gov.uk"
+          HostedZoneId: !ImportValue PublicHostedZoneId
+        - DomainName: !Sub "api.review-a.${Environment}.account.gov.uk"
+          HostedZoneId: !ImportValue PublicHostedZoneId
+      ValidationMethod: DNS
+
+  ExternalApiCustomDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Condition: CreateNonProdResources
+    Properties:
+      DomainName: !Sub "api.review-a.${Environment}.account.gov.uk"
+      DomainNameConfigurations:
+        - CertificateArn: !Ref ExternalCertificate
+          EndpointType: REGIONAL
+          SecurityPolicy: TLS_1_2
+
+  ExternalApiRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateNonProdResources
+    Properties:
+      Name: !Sub "api.review-a.${Environment}.account.gov.uk."
+      Type: A
+      HostedZoneId: !ImportValue PublicHostedZoneId
+      AliasTarget:
+        DNSName: !GetAtt ExternalApiCustomDomain.RegionalDomainName
+        HostedZoneId: !GetAtt ExternalApiCustomDomain.RegionalHostedZoneId
+        EvaluateTargetHealth: false
+
+  ExternalApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Condition: CreateNonProdResources
+    Properties:
+      DomainName: !Sub "api.review-a.${Environment}.account.gov.uk"
+      ApiId:
+        Fn::ImportValue:
+          !Sub address-cri-api-AddressApiGatewayId
+      Stage: !Ref Environment
+    DependsOn:
+      - ExternalApiCustomDomain
+
+  AddressFrontCustomDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Condition: CreateNonProdResources
+    Properties:
+      DomainName: !Sub "review-a.${Environment}.account.gov.uk"
+      DomainNameConfigurations:
+        - CertificateArn: !Ref ExternalCertificate
+          EndpointType: REGIONAL
+          SecurityPolicy: TLS_1_2
+
+  AddressFrontApiRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateNonProdResources
+    Properties:
+      Name: !Sub "review-a.${Environment}.account.gov.uk."
+      Type: A
+      HostedZoneId: !ImportValue PublicHostedZoneId
+      AliasTarget:
+        DNSName: !GetAtt AddressFrontCustomDomain.RegionalDomainName
+        HostedZoneId: !GetAtt AddressFrontCustomDomain.RegionalHostedZoneId
+        EvaluateTargetHealth: false
+
+  AddressFrontApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Condition: CreateNonProdResources
+    Properties:
+      DomainName: !Sub "review-a.${Environment}.account.gov.uk"
+      ApiId:
+        Fn::ImportValue:
+          !Sub address-cri-front-AddressFrontGatewayId
+      Stage: "$default"
+    DependsOn:
+      - AddressFrontCustomDomain
+
+  ProdExternalCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Condition: CreateProdResources
+    Properties:
+      DomainName: "review-a.account.gov.uk"
+      SubjectAlternativeNames:
+        - "api.review-a.account.gov.uk"
+      DomainValidationOptions:
+        - DomainName: "review-a.account.gov.uk"
+          HostedZoneId: !ImportValue PublicHostedZoneId
+        - DomainName: "api.review-a.account.gov.uk"
+          HostedZoneId: !ImportValue PublicHostedZoneId
+      ValidationMethod: DNS
+
+  ProdExternalApiCustomDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Condition: CreateProdResources
+    Properties:
+      DomainName: "api.review-a.account.gov.uk"
+      DomainNameConfigurations:
+        - CertificateArn: !Ref ProdExternalCertificate
+          EndpointType: REGIONAL
+          SecurityPolicy: TLS_1_2
+
+  ProdExternalApiRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateProdResources
+    Properties:
+      Name: "api.review-a.account.gov.uk."
+      Type: A
+      HostedZoneId: !ImportValue PublicHostedZoneId
+      AliasTarget:
+        DNSName: !GetAtt ProdExternalApiCustomDomain.RegionalDomainName
+        HostedZoneId: !GetAtt ProdExternalApiCustomDomain.RegionalHostedZoneId
+        EvaluateTargetHealth: false
+
+  ProdExternalApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Condition: CreateProdResources
+    Properties:
+      DomainName: "api.review-a.account.gov.uk"
+      ApiId:
+        Fn::ImportValue:
+          !Sub address-cri-api-AddressApiGatewayId
+      Stage: !Ref Environment
+    DependsOn:
+      - ProdExternalApiCustomDomain
+
+  ProdAddressFrontCustomDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Condition: CreateProdResources
+    Properties:
+      DomainName: "review-a.account.gov.uk"
+      DomainNameConfigurations:
+        - CertificateArn: !Ref ProdExternalCertificate
+          EndpointType: REGIONAL
+          SecurityPolicy: TLS_1_2
+
+  ProdAddressFrontApiRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: CreateProdResources
+    Properties:
+      Name: "review-a.account.gov.uk."
+      Type: A
+      HostedZoneId: !ImportValue PublicHostedZoneId
+      AliasTarget:
+        DNSName: !GetAtt ProdAddressFrontCustomDomain.RegionalDomainName
+        HostedZoneId: !GetAtt ProdAddressFrontCustomDomain.RegionalHostedZoneId
+        EvaluateTargetHealth: false
+
+  ProdAddressFrontApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Condition: CreateProdResources
+    Properties:
+      DomainName: "review-a.account.gov.uk"
+      ApiId:
+        Fn::ImportValue:
+          !Sub address-cri-front-AddressFrontGatewayId
+      Stage: "$default"
+    DependsOn:
+      - ProdAddressFrontCustomDomain
