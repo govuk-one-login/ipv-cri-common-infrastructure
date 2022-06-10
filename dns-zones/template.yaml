@@ -14,22 +14,25 @@ Parameters:
       - production
 
 Conditions:
-  CreateProdResources: !Equals [ !Ref Environment, production]
-  CreateNonProdResources: !Not [!Condition CreateProdResources]
+  IsProduction: !Equals [ !Ref Environment, production]
 
 Resources:
   PublicHostedZone:
     Type: AWS::Route53::HostedZone
-    Condition: CreateNonProdResources
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
-      Name: !Sub review-a.${Environment}.account.gov.uk
+      Name: !If
+        - IsProduction
+        - review-a.account.gov.uk
+        - !Sub review-a.${Environment}.account.gov.uk
 
 Outputs:
   PublicHostedZoneNameServers:
-    Condition: CreateNonProdResources
     Value: !Join
           - ","
           - !GetAtt PublicHostedZone.NameServers
   PublicHostedZoneId:
-    Condition: CreateNonProdResources
     Value: !GetAtt PublicHostedZone.Id
+    Export:
+      Name: PublicHostedZoneId
