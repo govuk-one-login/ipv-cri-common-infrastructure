@@ -71,6 +71,7 @@ Resources:
   AuditEventDeadLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
+      KmsMasterKeyId: !Ref AuditEventQueueEncryptionKeyAlias
       Tags:
         - Key: Name
           Value: !Join
