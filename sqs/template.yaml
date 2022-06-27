@@ -28,7 +28,7 @@ Mappings:
       build: "arn:aws:iam::178023842775:root"
       staging: "arn:aws:iam::178023842775:root"
       integration: "arn:aws:iam::729485541398:root"
-      production: "arn:aws:iam::729485541398:root"
+      production: "arn:aws:iam::451773080033:root"
 
 Resources:
   AuditEventQueue:
