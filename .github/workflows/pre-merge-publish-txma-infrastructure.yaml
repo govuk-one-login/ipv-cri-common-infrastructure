@@ -1,15 +1,8 @@
 name: Package TxMA infrastructure to dev
 on:
   push:
-    branches-ignore:
+    branches:
       - main
-    paths:
-      - "txma/**"
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
     paths:
       - "txma/**"
   workflow_dispatch: # deploy manually
@@ -35,7 +28,6 @@ jobs:
     timeout-minutes: 10
     env:
       AWS_REGION: eu-west-2
-      STACK_NAME: txma-infrastructure
     permissions:
       id-token: write
       contents: read

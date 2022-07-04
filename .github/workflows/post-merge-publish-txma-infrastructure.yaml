@@ -8,6 +8,7 @@ on:
 
 jobs:
   publish_txma_to_matrix_build:
+    needs: publish_txma_to_matrix_dev
     strategy:
       matrix:
         target: [ ADDRESS_BUILD, FRAUD_BUILD, KBV_BUILD ]
@@ -27,7 +28,6 @@ jobs:
     timeout-minutes: 10
     env:
       AWS_REGION: eu-west-2
-      STACK_NAME: txma-infrastructure
     permissions:
       id-token: write
       contents: read
