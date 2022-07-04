@@ -1,29 +1,36 @@
-name: Package core infrastructure
+name: Package core infrastructure to dev
 on:
   push:
-    branches:
+    branches-ignore:
       - main
+    paths:
+      - "core/**"
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
     paths:
       - "core/**"
   workflow_dispatch: # deploy manually
 
 jobs:
-  publish_core_to_matrix_build:
+  publish_core_to_matrix_dev:
     strategy:
       matrix:
-        target: [ ADDRESS_BUILD, FRAUD_BUILD, KBV_BUILD ]
+        target: [ ADDRESS_DEV, FRAUD_DEV, KBV_DEV ]
         include:
-          - target: ADDRESS_BUILD
-            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: ADDRESS_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
-            GH_ACTIONS_ROLE_ARN_SECRET:    ADDRESS_BUILD_CORE_GH_ACTIONS_ROLE_ARN
-          - target: FRAUD_BUILD
-            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: FRAUD_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
-            GH_ACTIONS_ROLE_ARN_SECRET:    FRAUD_BUILD_CORE_GH_ACTIONS_ROLE_ARN
-          - target: KBV_BUILD
-            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: KBV_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
-            GH_ACTIONS_ROLE_ARN_SECRET:    KBV_BUILD_CORE_GH_ACTIONS_ROLE_ARN
+          - target: ADDRESS_DEV
+            ARTIFACT_SOURCE_BUCKET_SECRET: ADDRESS_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: ADDRESS_DEV_CORE_GH_ACTIONS_ROLE_ARN
+          - target: FRAUD_DEV
+            ARTIFACT_SOURCE_BUCKET_SECRET: FRAUD_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: FRAUD_DEV_CORE_GH_ACTIONS_ROLE_ARN
+          - target: KBV_DEV
+            ARTIFACT_SOURCE_BUCKET_SECRET: KBV_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: KBV_DEV_CORE_GH_ACTIONS_ROLE_ARN
       max-parallel: 2
-    name: Publish core infrastructure to build
+    name: Publish core infrastructure to dev
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
