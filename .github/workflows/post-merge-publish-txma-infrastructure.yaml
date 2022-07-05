@@ -1,30 +1,29 @@
-name: Package core infrastructure
+name: Package txma infrastructure
 on:
   push:
     branches:
       - main
     paths:
-      - "core/**"
-  workflow_dispatch: # deploy manually
+      - "txma/**"
 
 jobs:
-  publish_core_to_matrix_build:
-    needs: publish_core_to_matrix_dev
+  publish_txma_to_matrix_build:
+    needs: publish_txma_to_matrix_dev
     strategy:
       matrix:
         target: [ ADDRESS_BUILD, FRAUD_BUILD, KBV_BUILD ]
         include:
           - target: ADDRESS_BUILD
-            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: ADDRESS_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
-            GH_ACTIONS_ROLE_ARN_SECRET:    ADDRESS_BUILD_CORE_GH_ACTIONS_ROLE_ARN
+            ARTIFACT_SOURCE_BUCKET_SECRET: ADDRESS_TXMA_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET:    ADDRESS_TXMA_GH_ACTIONS_ROLE_ARN
           - target: FRAUD_BUILD
-            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: FRAUD_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
-            GH_ACTIONS_ROLE_ARN_SECRET:    FRAUD_BUILD_CORE_GH_ACTIONS_ROLE_ARN
+            ARTIFACT_SOURCE_BUCKET_SECRET: FRAUD_TXMA_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET:    FRAUD_TXMA_GH_ACTIONS_ROLE_ARN
           - target: KBV_BUILD
-            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: KBV_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
-            GH_ACTIONS_ROLE_ARN_SECRET:    KBV_BUILD_CORE_GH_ACTIONS_ROLE_ARN
+            ARTIFACT_SOURCE_BUCKET_SECRET: KBV_TXMA_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET:    KBV_TXMA_GH_ACTIONS_ROLE_ARN
       max-parallel: 2
-    name: Publish core infrastructure to build
+    name: Publish TxMA infrastructure to build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -45,12 +44,15 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: SAM Validate
-        run: sam validate --region ${{ env.AWS_REGION }} -t core/template.yaml
+        run: sam validate --region ${{ env.AWS_REGION }} -t txma/template.yaml
+
+      - name: SAM build
+        run: sam build -t txma/template.yaml
 
       - name: SAM package
         run: |
-          sam package -t core/template.yaml  \
-            --s3-bucket ${{ secrets[matrix.ARTIFACT_SOURCE_BUCKET_NAME_SECRET] }} \
+          sam package -t txma/template.yaml  \
+            --s3-bucket ${{ secrets[matrix.ARTIFACT_SOURCE_BUCKET_SECRET] }} \
             --region ${{ env.AWS_REGION }} --output-template-file=cf-template.yaml
 
       - name: Zip the CloudFormation template
@@ -58,5 +60,5 @@ jobs:
 
       - name: Upload zipped CloudFormation artifact to S3
         env:
-          ARTIFACT_SOURCE_BUCKET_NAME: ${{ secrets[matrix.ARTIFACT_SOURCE_BUCKET_NAME_SECRET] }}
+          ARTIFACT_SOURCE_BUCKET_NAME: ${{ secrets[matrix.ARTIFACT_SOURCE_BUCKET_SECRET] }}
         run: aws s3 cp template.zip "s3://${{ env.ARTIFACT_SOURCE_BUCKET_NAME }}/template.zip"

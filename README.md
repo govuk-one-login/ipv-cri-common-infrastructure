@@ -12,35 +12,49 @@ GitHub secrets are required for deployment.
 
 Required GitHub secrets:
 
-TxMA SQS for dev:
+Core secrets for dev environments:
 
-| Secret                              | Description |
-|-------------------------------------| ----------- |
-| DEV_SQS_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
-| DEV_SQS_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
+| Secret                                       | Description |
+|----------------------------------------------| ----------- |
+| ADDRESS_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
+| ADDRESS_DEV_CORE_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
+| FRAUD_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME   | Upload artifact bucket |
+| FRAUD_DEV_CORE_GH_ACTIONS_ROLE_ARN           | Assumed role IAM ARN |
+| KBV_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME     | Upload artifact bucket |
+| KBV_DEV_CORE_GH_ACTIONS_ROLE_ARN             | Assumed role IAM ARN |
 
-TxMA SQS for Address:
+Core secrets for Build environments:
 
-| Secret                                  | Description |
-|-----------------------------------------| ----------- |
-| ADDRESS_SQS_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
-| ADDRESS_SQS_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
+| Secret                                         | Description |
+|------------------------------------------------| ----------- |
+| ADDRESS_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
+| ADDRESS_BUILD_CORE_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
+| FRAUD_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME   | Upload artifact bucket |
+| FRAUD_BUILD_CORE_GH_ACTIONS_ROLE_ARN           | Assumed role IAM ARN |
+| KBV_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME     | Upload artifact bucket |
+| KBV_BUILD_CORE_GH_ACTIONS_ROLE_ARN             | Assumed role IAM ARN |
 
-TxMA SQS for Fraud:
+TxMA secrets for dev environments:
 
-| Secret                                | Description |
-|---------------------------------------| ----------- |
-| FRAUD_SQS_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
-| FRAUD_SQS_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
+| Secret                                       | Description |
+|----------------------------------------------| ----------- |
+| ADDRESS_DEV_TXMA_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
+| ADDRESS_DEV_TXMA_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
+| FRAUD_DEV_TXMA_ARTIFACT_SOURCE_BUCKET_NAME   | Upload artifact bucket |
+| FRAUD_DEV_TXMA_GH_ACTIONS_ROLE_ARN           | Assumed role IAM ARN |
+| KBV_DEV_TXMA_ARTIFACT_SOURCE_BUCKET_NAME     | Upload artifact bucket |
+| KBV_DEV_TXMA_GH_ACTIONS_ROLE_ARN             | Assumed role IAM ARN |
 
+TxMA secrets for Build environments:
 
-TxMA SQS for KBV:
-
-| Secret                              | Description |
-|-------------------------------------| ----------- |
-| KBV_SQS_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
-| KBV_SQS_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
-
+| Secret                                         | Description |
+|------------------------------------------------| ----------- |
+| ADDRESS_BUILD_TXMA_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
+| ADDRESS_BUILD_TXMA_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
+| FRAUD_BUILD_TXMA_ARTIFACT_SOURCE_BUCKET_NAME   | Upload artifact bucket |
+| FRAUD_BUILD_TXMA_GH_ACTIONS_ROLE_ARN           | Assumed role IAM ARN |
+| KBV_BUILD_TXMA_ARTIFACT_SOURCE_BUCKET_NAME     | Upload artifact bucket |
+| KBV_BUILD_TXMA_GH_ACTIONS_ROLE_ARN             | Assumed role IAM ARN |
 
 Frontend test dev:
 
