@@ -22,6 +22,8 @@ Core secrets for dev environments:
 | FRAUD_DEV_CORE_GH_ACTIONS_ROLE_ARN           | Assumed role IAM ARN |
 | KBV_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME     | Upload artifact bucket |
 | KBV_DEV_CORE_GH_ACTIONS_ROLE_ARN             | Assumed role IAM ARN |
+| KBV_POC_CORE_ARTIFACT_SOURCE_BUCKET_NAME     | Upload artifact bucket |
+| KBV_POC_CORE_GH_ACTIONS_ROLE_ARN             | Assumed role IAM ARN |
 
 Core secrets for Build environments:
 
@@ -44,6 +46,8 @@ TxMA secrets for dev environments:
 | FRAUD_DEV_TXMA_GH_ACTIONS_ROLE_ARN           | Assumed role IAM ARN |
 | KBV_DEV_TXMA_ARTIFACT_SOURCE_BUCKET_NAME     | Upload artifact bucket |
 | KBV_DEV_TXMA_GH_ACTIONS_ROLE_ARN             | Assumed role IAM ARN |
+| KBV_POC_TXMA_ARTIFACT_SOURCE_BUCKET_NAME     | Upload artifact bucket |
+| KBV_POC_TXMA_GH_ACTIONS_ROLE_ARN             | Assumed role IAM ARN |
 
 TxMA secrets for Build environments:
 
