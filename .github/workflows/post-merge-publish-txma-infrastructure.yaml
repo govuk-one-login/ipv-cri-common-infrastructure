@@ -12,7 +12,7 @@ jobs:
   publish_txma_to_matrix_dev:
     strategy:
       matrix:
-        target: [ ADDRESS_DEV, FRAUD_DEV, KBV_DEV, KBV_POC ]
+        target: [ ADDRESS_DEV, FRAUD_DEV, KBV_DEV, KBV_POC, DL_DEV ]
         include:
           - target: ADDRESS_DEV
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: ADDRESS_DEV_TXMA_ARTIFACT_SOURCE_BUCKET_NAME
@@ -24,6 +24,9 @@ jobs:
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: KBV_DEV_TXMA_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_SECRET: KBV_DEV_TXMA_GH_ACTIONS_ROLE_ARN
           - target: KBV_POC
+            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: KBV_POC_TXMA_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: KBV_POC_TXMA_GH_ACTIONS_ROLE_ARN
+          - target: DL_DEV
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: KBV_POC_TXMA_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_SECRET: KBV_POC_TXMA_GH_ACTIONS_ROLE_ARN
       max-parallel: 2
@@ -72,7 +75,7 @@ jobs:
     needs: publish_txma_to_matrix_dev
     strategy:
       matrix:
-        target: [ ADDRESS_BUILD, FRAUD_BUILD, KBV_BUILD ]
+        target: [ ADDRESS_BUILD, FRAUD_BUILD, KBV_BUILD, DL_BUILD ]
         include:
           - target: ADDRESS_BUILD
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: ADDRESS_BUILD_TXMA_ARTIFACT_SOURCE_BUCKET_NAME
@@ -83,6 +86,9 @@ jobs:
           - target: KBV_BUILD
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: KBV_BUILD_TXMA_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_SECRET:    KBV_BUILD_TXMA_GH_ACTIONS_ROLE_ARN
+           - target: DL_BUILD
+            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: DL_BUILD_TXMA_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: DL_BUILD_TXMA_GH_ACTIONS_ROLE_ARN
       max-parallel: 2
     name: Publish txma infrastructure to build
     runs-on: ubuntu-latest
