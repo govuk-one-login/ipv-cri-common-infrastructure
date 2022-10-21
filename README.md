@@ -53,14 +53,16 @@ TxMA secrets for dev environments:
 
 TxMA secrets for Build environments:
 
-| Secret                                         | Description |
-|------------------------------------------------| ----------- |
-| ADDRESS_BUILD_TXMA_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
-| ADDRESS_BUILD_TXMA_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
-| FRAUD_BUILD_TXMA_ARTIFACT_SOURCE_BUCKET_NAME   | Upload artifact bucket |
-| FRAUD_BUILD_TXMA_GH_ACTIONS_ROLE_ARN           | Assumed role IAM ARN |
-| KBV_BUILD_TXMA_ARTIFACT_SOURCE_BUCKET_NAME     | Upload artifact bucket |
-| KBV_BUILD_TXMA_GH_ACTIONS_ROLE_ARN             | Assumed role IAM ARN |
+| Secret                                            | Description |
+|---------------------------------------------------| ----------- |
+| ADDRESS_BUILD_TXMA_ARTIFACT_SOURCE_BUCKET_NAME    | Upload artifact bucket |
+| ADDRESS_BUILD_TXMA_GH_ACTIONS_ROLE_ARN            | Assumed role IAM ARN |
+| FRAUD_BUILD_TXMA_ARTIFACT_SOURCE_BUCKET_NAME      | Upload artifact bucket |
+| FRAUD_BUILD_TXMA_GH_ACTIONS_ROLE_ARN              | Assumed role IAM ARN |
+| KBV_BUILD_TXMA_ARTIFACT_SOURCE_BUCKET_NAME        | Upload artifact bucket |
+| KBV_BUILD_TXMA_GH_ACTIONS_ROLE_ARN                | Assumed role IAM ARN |
+| FACETOFACE_BUILD_TXMA_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
+| FACETOFACE_BUILD_TXMA_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
 
 Frontend test dev:
 
