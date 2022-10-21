@@ -27,14 +27,16 @@ Core secrets for dev environments:
 
 Core secrets for Build environments:
 
-| Secret                                         | Description |
-|------------------------------------------------| ----------- |
-| ADDRESS_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME | Upload artifact bucket |
-| ADDRESS_BUILD_CORE_GH_ACTIONS_ROLE_ARN         | Assumed role IAM ARN |
-| FRAUD_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME   | Upload artifact bucket |
-| FRAUD_BUILD_CORE_GH_ACTIONS_ROLE_ARN           | Assumed role IAM ARN |
-| KBV_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME     | Upload artifact bucket |
-| KBV_BUILD_CORE_GH_ACTIONS_ROLE_ARN             | Assumed role IAM ARN |
+| Secret                                            | Description |
+|---------------------------------------------------| ----------- |
+| ADDRESS_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME    | Upload artifact bucket |
+| ADDRESS_BUILD_CORE_GH_ACTIONS_ROLE_ARN            | Assumed role IAM ARN |
+| FRAUD_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME      | Upload artifact bucket |
+| FRAUD_BUILD_CORE_GH_ACTIONS_ROLE_ARN              | Assumed role IAM ARN |
+| KBV_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME        | Upload artifact bucket |
+| KBV_BUILD_CORE_GH_ACTIONS_ROLE_ARN                | Assumed role IAM ARN |
+| FACETOFACE_BUILD_CORE_ARTIFACT_BUCKET_SOURCE_NAME | Upload artifact bucket |
+| FACETOFACE_BUILD_CORE_ACTIONS_ROLE_ARN            | Assumed role IAM ARN |            
 
 TxMA secrets for dev environments:
 
