@@ -131,4 +131,5 @@ jobs:
       - name: Upload zipped CloudFormation artifact to S3
         env:
           ARTIFACT_SOURCE_BUCKET_NAME: ${{ secrets[matrix.ARTIFACT_SOURCE_BUCKET_NAME_SECRET] }}
-        run: aws s3 cp template.zip "s3://${{ env.ARTIFACT_SOURCE_BUCKET_NAME }}/template.zip"
+        run: aws s3 cp template.zip "s3://${{ env.ARTIFACT_SOURCE_BUCKET_NAME }}/template.zip" \
+               --metadata "repository=$GITHUB_REPOSITORY,commitsha=$GITHUB_SHA" 
