@@ -1,0 +1,53 @@
+name: Pre merge test waf development
+on:
+  push:
+    branches:
+      - oj-1103-cloudfront-waf
+    paths:
+      - "cfwaf/**"
+  workflow_dispatch: # deploy manually
+
+jobs:
+  publish_cloudfront_waf_to_dev:
+    name: Publish CloudFront and WAF infrastructure to dev
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_REGION: eu-west-2
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup SAM
+        uses: aws-actions/setup-sam@v1
+
+      - name: sam fix https://github.com/aws/aws-sam-cli/issues/4527
+        run: $(dirname $(readlink $(which sam)))/pip install --force-reinstall "cryptography==38.0.4"
+
+      - name: Assume temporary AWS role
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.KBV_DEV_CFWAF_GH_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: SAM Validate
+        run: sam validate --region ${{ env.AWS_REGION }} -t cfwaf/template.yaml
+
+      - name: SAM build
+        run: sam build -t cfwaf/template.yaml
+
+      - name: SAM package
+        run: |
+          sam package -t cfwaf/template.yaml  \
+            --s3-bucket ${{ secrets.KBV_DEV_CFWAF_ARTIFACT_SOURCE_BUCKET_NAME }} \
+            --region ${{ env.AWS_REGION }} --output-template-file=cf-template.yaml
+
+      - name: Zip the CloudFormation template
+        run: zip template.zip cf-template.yaml
+
+      - name: Upload zipped CloudFormation artifact to S3
+        env:
+          ARTIFACT_SOURCE_BUCKET_NAME: ${{ secrets.KBV_DEV_CFWAF_ARTIFACT_SOURCE_BUCKET_NAME }}
+        run: aws s3 cp template.zip "s3://${{ env.ARTIFACT_SOURCE_BUCKET_NAME }}/template.zip"

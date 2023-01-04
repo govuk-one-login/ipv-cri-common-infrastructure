@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Description: "Digital Identity IPV CRI Core Infrastructure"
+
+Parameters:
+  Environment:
+    Description: "The environment type"
+    Type: "String"
+    AllowedValues:
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
+    ConstraintDescription: must be dev, build, staging, integration or production
+
+
+Resources:
+  FrontendDistribution:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        Origins:
+          # - Id: "FargateFrontEnd-ALB"
+          #   DomainName: "internal-kbv-c-LoadB-I0PRMZ2OE3W5-86316629.eu-west-2.elb.amazonaws.com"
+          #   OriginShield:
+          #     Enabled: true
+          #   ConnectionAttempts: 3
+          #   ConnectionTimeout: 10
+          #   CustomOriginConfig:
+          #     OriginProtocolPolicy: https-only
+          #     OriginSSLProtocols:
+          #       - TLSv1.2
+          - Id: "FrontAPIGateway"
+            DomainName: !Join
+              - ''
+              - - !Ref "kbv-cri-front-KBVFrontGatewayId"
+                - !Sub ".execute-api.${AWS::Region}.amazonaws.com"
+            OriginShield:
+              Enabled: true
+            ConnectionAttempts: 3
+            ConnectionTimeout: 10
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1.2
+          - Id: "PublicAPIGateway"
+            DomainName: !Join
+              - ''
+              - - !Ref "kbv-cri-api-v1-PublicKBVApiGatewayId"
+                - !Sub ".execute-api.${AWS::Region}.amazonaws.com"
+            OriginShield:
+              Enabled: true
+            ConnectionAttempts: 3
+            ConnectionTimeout: 10
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1.2
+          - Id: "PrivateAPIGateway"
+            DomainName: !Join
+              - ''
+              - - !Ref "kbv-cri-api-v1-PrivateKBVApiGatewayId"
+                - !Sub ".execute-api.${AWS::Region}.amazonaws.com"
+            OriginShield:
+              Enabled: true
+            ConnectionAttempts: 3
+            ConnectionTimeout: 10
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1.2
+        Enabled: "true"
+        DefaultCacheBehavior:
+          TargetOriginId: FrontEnd-ALB
+          ViewerProtocolPolicy: "redirect-to-https"
+          AllowedMethods:
+            - "GET"
+            - "HEAD"
+          CachedMethods:
+            - "GET"
+            - "HEAD"
+          CachePolicyId: "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: "true"
