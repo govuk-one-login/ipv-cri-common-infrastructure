@@ -40,15 +40,15 @@ Resources:
       WebACLArn:
         Fn::ImportValue: "CriWebAclARN"
 
-  PubliceKbvApiGwCRIWAFAssociation:
-    Type: AWS::WAFv2::WebACLAssociation
-    Properties:
-      ResourceArn:
-        Fn::Join:
-          - ""
-          - - "arn:aws:apigateway:eu-west-2::/restapis/"
-            - Fn::ImportValue: "kbv-cri-api-v1-PublicKBVApiGatewayId"
-            - !Sub "/stages/${Environment}"
-      WebACLArn:
-        Fn::ImportValue: "CriWebAclARN"
+  # PubliceKbvApiGwCRIWAFAssociation:
+  #   Type: AWS::WAFv2::WebACLAssociation
+  #   Properties:
+  #     ResourceArn:
+  #       Fn::Join:
+  #         - ""
+  #         - - "arn:aws:apigateway:eu-west-2::/restapis/"
+  #           - Fn::ImportValue: "kbv-cri-api-v1-PublicKBVApiGatewayId"
+  #           - !Sub "/stages/${Environment}"
+  #     WebACLArn:
+  #       Fn::ImportValue: "CriWebAclARN"
 
