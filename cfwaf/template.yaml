@@ -16,7 +16,7 @@ Parameters:
 
 
 Resources:
-  CommonCRIWAFAssociation:
+  KbvApiGwCRIWAFAssociation:
     Type: AWS::WAFv2::WebACLAssociation
     Properties:
       ResourceArn:
@@ -24,6 +24,30 @@ Resources:
           - ""
           - - "arn:aws:apigateway:eu-west-2::/restapis/"
             - Fn::ImportValue: "kbv-cri-api-v1-KBVApiGatewayId"
+            - !Sub "/stages/${Environment}"
+      WebACLArn:
+        Fn::ImportValue: "CriWebAclARN"
+
+  PrivateKbvApiGwCRIWAFAssociation:
+    Type: AWS::WAFv2::WebACLAssociation
+    Properties:
+      ResourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:aws:apigateway:eu-west-2::/restapis/"
+            - Fn::ImportValue: "kbv-cri-api-v1-PrivateKBVApiGatewayId"
+            - !Sub "/stages/${Environment}"
+      WebACLArn:
+        Fn::ImportValue: "CriWebAclARN"
+
+  PubliceKbvApiGwCRIWAFAssociation:
+    Type: AWS::WAFv2::WebACLAssociation
+    Properties:
+      ResourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:aws:apigateway:eu-west-2::/restapis/"
+            - Fn::ImportValue: "kbv-cri-api-v1-PublicKBVApiGatewayId"
             - !Sub "/stages/${Environment}"
       WebACLArn:
         Fn::ImportValue: "CriWebAclARN"
