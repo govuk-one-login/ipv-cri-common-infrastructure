@@ -29,6 +29,9 @@ jobs:
           - target: CIC_DEV
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: CIC_DEV_TXMA_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_SECRET: CIC_DEV_TXMA_GH_ACTIONS_ROLE_ARN
+          - target: DL_DEV
+            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: DL_DEV_TXMA_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: DL_DEV_TXMA_GH_ACTIONS_ROLE_ARN
       max-parallel: 2
     name: Publish txma infrastructure to dev
     runs-on: ubuntu-latest
