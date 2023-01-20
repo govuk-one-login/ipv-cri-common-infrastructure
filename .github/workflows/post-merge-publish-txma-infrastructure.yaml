@@ -12,7 +12,7 @@ jobs:
   publish_txma_to_matrix_dev:
     strategy:
       matrix:
-        target: [ FRAUD_DEV ]
+        target: [ ADDRESS_DEV, FRAUD_DEV, KBV_DEV, KBV_POC, CIC_DEV, DL_DEV ]
         include:
           - target: ADDRESS_DEV
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: ADDRESS_DEV_TXMA_ARTIFACT_SOURCE_BUCKET_NAME
@@ -83,7 +83,7 @@ jobs:
     needs: publish_txma_to_matrix_dev
     strategy:
       matrix:
-        target: [ FRAUD_BUILD ]
+        target: [ ADDRESS_BUILD, FRAUD_BUILD, KBV_BUILD, DL_BUILD, CIC_BUILD ]
         include:
           - target: ADDRESS_BUILD
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: ADDRESS_BUILD_TXMA_ARTIFACT_SOURCE_BUCKET_NAME

@@ -20,9 +20,6 @@ Parameters:
     ConstraintDescription: must be dev, build, staging, integration or production
   PermissionsBoundary:
     Type: String
-  SqsRetentionPeriod:
-    Type: Number
-    Default: 345600 # 4 days
 
 Mappings:
   TxMARootMapping:
@@ -37,7 +34,6 @@ Resources:
   AuditEventQueue:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: !Ref SqsRetentionPeriod
       KmsMasterKeyId: !Ref AuditEventQueueEncryptionKeyAlias
       RedriveAllowPolicy:
         redrivePermission: denyAll
@@ -75,7 +71,6 @@ Resources:
   AuditEventDeadLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: !Ref SqsRetentionPeriod
       KmsMasterKeyId: !Ref AuditEventQueueEncryptionKeyAlias
       Tags:
         - Key: Name
