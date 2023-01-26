@@ -34,6 +34,7 @@ Resources:
   AuditEventQueue:
     Type: AWS::SQS::Queue
     Properties:
+      MessageRetentionPeriod: 604800 # 7 days
       KmsMasterKeyId: !Ref AuditEventQueueEncryptionKeyAlias
       RedriveAllowPolicy:
         redrivePermission: denyAll
@@ -50,6 +51,8 @@ Resources:
           Value: "ci/cd"
         - Key: Source
           Value: "alphagov/di-ipv-cri-common-infrastructure/sqs/template.yaml"
+        - Key: Updated
+          Value: "2023-01-23"
 
   AuditEventQueuePolicy:
     Type: AWS::SQS::QueuePolicy
@@ -71,6 +74,7 @@ Resources:
   AuditEventDeadLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
+      MessageRetentionPeriod: 604800 # 7 days
       KmsMasterKeyId: !Ref AuditEventQueueEncryptionKeyAlias
       Tags:
         - Key: Name
@@ -82,6 +86,8 @@ Resources:
           Value: "ci/cd"
         - Key: Source
           Value: "alphagov/di-ipv-cri-common-infrastructure/sqs/template.yaml"
+        - Key: Updated
+          Value: "2023-01-23"
 
   AuditEventQueueEncryptionKey:
     Type: AWS::KMS::Key
