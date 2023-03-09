@@ -11,7 +11,7 @@ jobs:
   publish_core_to_matrix_dev:
     strategy:
       matrix:
-        target: [ ADDRESS_DEV, KBV_DEV, KBV_POC, CIC_DEV, DL_DEV ]
+        target: [ ADDRESS_DEV, KBV_DEV, KBV_POC, CIC_DEV, DL_DEV, PASSPORTA_DEV ]
         include:
           - target: ADDRESS_DEV
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: ADDRESS_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
@@ -28,6 +28,9 @@ jobs:
           - target: DL_DEV
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: DL_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_SECRET: DL_DEV_CORE_GH_ACTIONS_ROLE_ARN
+          - target: PASSPORTA_DEV
+            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: PASSPORTA_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: PASSPORTA_DEV_CORE_GH_ACTIONS_ROLE_ARN
       max-parallel: 2
     name: Publish core infrastructure to dev
     runs-on: ubuntu-latest
@@ -81,7 +84,7 @@ jobs:
     needs: publish_core_to_matrix_dev
     strategy:
       matrix:
-        target: [ ADDRESS_BUILD, FRAUD_BUILD, KBV_BUILD, DL_BUILD, CIC_BUILD ]
+        target: [ ADDRESS_BUILD, FRAUD_BUILD, KBV_BUILD, DL_BUILD, CIC_BUILD, PASSPORTA_BUILD ]
         include:
           - target: ADDRESS_BUILD
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: ADDRESS_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
@@ -98,6 +101,9 @@ jobs:
           - target: CIC_BUILD
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: CIC_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_SECRET: CIC_BUILD_CORE_GH_ACTIONS_ROLE_ARN
+          - target: PASSPORTA_BUILD
+            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: PASSPORTA_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: PASSPORTA_BUILD_CORE_GH_ACTIONS_ROLE_ARN
       max-parallel: 2
     name: Publish core infrastructure to build
     runs-on: ubuntu-latest
