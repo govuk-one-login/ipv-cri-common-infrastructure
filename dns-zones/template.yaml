@@ -1,17 +1,23 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Description: >-
-  Creates the necessary components to manage DNS in Address CRI.
+  Creates the necessary components to manage DNS in a CRI.
 
 Parameters:
   Environment:
     Description: The name of the environment to deploy to
     Type: String
     AllowedValues:
+      - dev
       - build
       - staging
       - integration
       - production
+  CriSubdomain:
+    Description: The unique credential issuer subdomain
+    Type: String
+    AllowedPattern: "review-.+"
+    ConstraintDescription: must match pattern review-.+ i.e. review-a
 
 Conditions:
   IsProduction: !Equals [ !Ref Environment, production]
@@ -24,8 +30,8 @@ Resources:
     Properties:
       Name: !If
         - IsProduction
-        - review-a.account.gov.uk
-        - !Sub review-a.${Environment}.account.gov.uk
+        - !Sub ${CriSubdomain}.account.gov.uk
+        - !Sub ${CriSubdomain}.${Environment}.account.gov.uk
 
 Outputs:
   PublicHostedZoneNameServers:

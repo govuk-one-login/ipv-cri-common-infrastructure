@@ -1,17 +1,36 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Description: >-
-  Creates the necessary components to manage DNS in Address CRI.
+  Creates the necessary components to manage DNS for a Credential Issuer
 
 Parameters:
   Environment:
     Description: The name of the environment to deploy to
     Type: String
     AllowedValues:
+      - dev
       - build
       - staging
       - integration
       - production
+  CriName:
+    Description: The credential issuer name
+    Type: String
+    Default: "none"
+    AllowedValues:
+      - none
+      - Passport
+  CriSubdomain:
+    Description: The unique credential issuer subdomain
+    Type: String
+    AllowedPattern: "review-.+"
+    ConstraintDescription: must match pattern review-.+ i.e. review-a
+  FrontStackName:
+    Description: The CRI Frontend Stack Name i.e. passport-cri-front
+    Type: String
+  ApiStackName:
+    Description: The CRI Api Stack Name i.e. passport-cri-api
+    Type: String
 
 Conditions:
   CreateProdResources: !Equals [ !Ref Environment, production]
@@ -22,13 +41,13 @@ Resources:
     Type: AWS::CertificateManager::Certificate
     Condition: CreateNonProdResources
     Properties:
-      DomainName: !Sub "review-a.${Environment}.account.gov.uk"
+      DomainName: !Sub "${CriSubdomain}.${Environment}.account.gov.uk"
       SubjectAlternativeNames:
-        - !Sub "api.review-a.${Environment}.account.gov.uk"
+        - !Sub "api.${CriSubdomain}.${Environment}.account.gov.uk"
       DomainValidationOptions:
-        - DomainName: !Sub "review-a.${Environment}.account.gov.uk"
+        - DomainName: !Sub "${CriSubdomain}.${Environment}.account.gov.uk"
           HostedZoneId: !ImportValue PublicHostedZoneId
-        - DomainName: !Sub "api.review-a.${Environment}.account.gov.uk"
+        - DomainName: !Sub "api.${CriSubdomain}.${Environment}.account.gov.uk"
           HostedZoneId: !ImportValue PublicHostedZoneId
       ValidationMethod: DNS
 
@@ -36,7 +55,7 @@ Resources:
     Type: AWS::ApiGatewayV2::DomainName
     Condition: CreateNonProdResources
     Properties:
-      DomainName: !Sub "api.review-a.${Environment}.account.gov.uk"
+      DomainName: !Sub "api.${CriSubdomain}.${Environment}.account.gov.uk"
       DomainNameConfigurations:
         - CertificateArn: !Ref ExternalCertificate
           EndpointType: REGIONAL
@@ -46,7 +65,7 @@ Resources:
     Type: AWS::Route53::RecordSet
     Condition: CreateNonProdResources
     Properties:
-      Name: !Sub "api.review-a.${Environment}.account.gov.uk."
+      Name: !Sub "api.${CriSubdomain}.${Environment}.account.gov.uk."
       Type: A
       HostedZoneId: !ImportValue PublicHostedZoneId
       AliasTarget:
@@ -58,59 +77,59 @@ Resources:
     Type: AWS::ApiGatewayV2::ApiMapping
     Condition: CreateNonProdResources
     Properties:
-      DomainName: !Sub "api.review-a.${Environment}.account.gov.uk"
+      DomainName: !Sub "api.${CriSubdomain}.${Environment}.account.gov.uk"
       ApiId:
         Fn::ImportValue:
-          !Sub address-cri-api-AddressApiGatewayId
+          !Sub ${ApiStackName}-${CriName}ApiGatewayId
       Stage: !Ref Environment
     DependsOn:
       - ExternalApiCustomDomain
 
-  AddressFrontCustomDomain:
+  FrontCustomDomain:
     Type: AWS::ApiGatewayV2::DomainName
     Condition: CreateNonProdResources
     Properties:
-      DomainName: !Sub "review-a.${Environment}.account.gov.uk"
+      DomainName: !Sub "${CriSubdomain}.${Environment}.account.gov.uk"
       DomainNameConfigurations:
         - CertificateArn: !Ref ExternalCertificate
           EndpointType: REGIONAL
           SecurityPolicy: TLS_1_2
 
-  AddressFrontApiRecord:
+  FrontApiRecord:
     Type: AWS::Route53::RecordSet
     Condition: CreateNonProdResources
     Properties:
-      Name: !Sub "review-a.${Environment}.account.gov.uk."
+      Name: !Sub "${CriSubdomain}.${Environment}.account.gov.uk."
       Type: A
       HostedZoneId: !ImportValue PublicHostedZoneId
       AliasTarget:
-        DNSName: !GetAtt AddressFrontCustomDomain.RegionalDomainName
-        HostedZoneId: !GetAtt AddressFrontCustomDomain.RegionalHostedZoneId
+        DNSName: !GetAtt FrontCustomDomain.RegionalDomainName
+        HostedZoneId: !GetAtt FrontCustomDomain.RegionalHostedZoneId
         EvaluateTargetHealth: false
 
-  AddressFrontApiMapping:
+  FrontApiMapping:
     Type: AWS::ApiGatewayV2::ApiMapping
     Condition: CreateNonProdResources
     Properties:
-      DomainName: !Sub "review-a.${Environment}.account.gov.uk"
+      DomainName: !Sub "${CriSubdomain}.${Environment}.account.gov.uk"
       ApiId:
         Fn::ImportValue:
-          !Sub address-cri-front-AddressFrontGatewayId
+          !Sub ${FrontStackName}-${CriName}FrontGatewayId
       Stage: "$default"
     DependsOn:
-      - AddressFrontCustomDomain
+      - FrontCustomDomain
 
   ProdExternalCertificate:
     Type: AWS::CertificateManager::Certificate
     Condition: CreateProdResources
     Properties:
-      DomainName: "review-a.account.gov.uk"
+      DomainName: !Sub "${CriSubdomain}.account.gov.uk"
       SubjectAlternativeNames:
-        - "api.review-a.account.gov.uk"
+        - !Sub "api.${CriSubdomain}.account.gov.uk"
       DomainValidationOptions:
-        - DomainName: "review-a.account.gov.uk"
+        - DomainName: !Sub "${CriSubdomain}.account.gov.uk"
           HostedZoneId: !ImportValue PublicHostedZoneId
-        - DomainName: "api.review-a.account.gov.uk"
+        - DomainName: !Sub "api.${CriSubdomain}.account.gov.uk"
           HostedZoneId: !ImportValue PublicHostedZoneId
       ValidationMethod: DNS
 
@@ -118,7 +137,7 @@ Resources:
     Type: AWS::ApiGatewayV2::DomainName
     Condition: CreateProdResources
     Properties:
-      DomainName: "api.review-a.account.gov.uk"
+      DomainName: !Sub "api.${CriSubdomain}.account.gov.uk"
       DomainNameConfigurations:
         - CertificateArn: !Ref ProdExternalCertificate
           EndpointType: REGIONAL
@@ -128,7 +147,7 @@ Resources:
     Type: AWS::Route53::RecordSet
     Condition: CreateProdResources
     Properties:
-      Name: "api.review-a.account.gov.uk."
+      Name: !Sub "api.${CriSubdomain}.account.gov.uk."
       Type: A
       HostedZoneId: !ImportValue PublicHostedZoneId
       AliasTarget:
@@ -140,44 +159,44 @@ Resources:
     Type: AWS::ApiGatewayV2::ApiMapping
     Condition: CreateProdResources
     Properties:
-      DomainName: "api.review-a.account.gov.uk"
+      DomainName: !Sub "api.${CriSubdomain}.account.gov.uk"
       ApiId:
         Fn::ImportValue:
-          !Sub address-cri-api-AddressApiGatewayId
+          !Sub ${ApiStackName}-${CriName}ApiGatewayId
       Stage: !Ref Environment
     DependsOn:
       - ProdExternalApiCustomDomain
 
-  ProdAddressFrontCustomDomain:
+  ProdFrontCustomDomain:
     Type: AWS::ApiGatewayV2::DomainName
     Condition: CreateProdResources
     Properties:
-      DomainName: "review-a.account.gov.uk"
+      DomainName: !Sub "${CriSubdomain}.account.gov.uk"
       DomainNameConfigurations:
         - CertificateArn: !Ref ProdExternalCertificate
           EndpointType: REGIONAL
           SecurityPolicy: TLS_1_2
 
-  ProdAddressFrontApiRecord:
+  ProdFrontApiRecord:
     Type: AWS::Route53::RecordSet
     Condition: CreateProdResources
     Properties:
-      Name: "review-a.account.gov.uk."
+      Name: !Sub "${CriSubdomain}.account.gov.uk."
       Type: A
       HostedZoneId: !ImportValue PublicHostedZoneId
       AliasTarget:
-        DNSName: !GetAtt ProdAddressFrontCustomDomain.RegionalDomainName
-        HostedZoneId: !GetAtt ProdAddressFrontCustomDomain.RegionalHostedZoneId
+        DNSName: !GetAtt ProdFrontCustomDomain.RegionalDomainName
+        HostedZoneId: !GetAtt ProdFrontCustomDomain.RegionalHostedZoneId
         EvaluateTargetHealth: false
 
-  ProdAddressFrontApiMapping:
+  ProdFrontApiMapping:
     Type: AWS::ApiGatewayV2::ApiMapping
     Condition: CreateProdResources
     Properties:
-      DomainName: "review-a.account.gov.uk"
+      DomainName: !Sub "${CriSubdomain}.account.gov.uk"
       ApiId:
         Fn::ImportValue:
-          !Sub address-cri-front-AddressFrontGatewayId
+          !Sub ${FrontStackName}-${CriName}FrontGatewayId
       Stage: "$default"
     DependsOn:
-      - ProdAddressFrontCustomDomain
+      - ProdFrontCustomDomain
