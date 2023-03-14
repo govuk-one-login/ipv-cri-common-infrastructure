@@ -46,7 +46,7 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v4
-        with: 
+        with:
           python-version: 3.11.2
 
       - name: Setup SAM
@@ -55,7 +55,7 @@ jobs:
           version: 1.74.0
 
       - name: Assume temporary AWS role
-        uses: aws-actions/configure-aws-credentials@v1-node16
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ secrets[matrix.GH_ACTIONS_ROLE_ARN_SECRET] }}
           aws-region: ${{ env.AWS_REGION }}
@@ -119,7 +119,7 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v4
-        with: 
+        with:
           python-version: 3.11.2
 
       - name: Setup SAM
@@ -128,7 +128,7 @@ jobs:
           version: 1.74.0
 
       - name: Assume temporary AWS role
-        uses: aws-actions/configure-aws-credentials@v1-node16
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ secrets[matrix.GH_ACTIONS_ROLE_ARN_SECRET] }}
           aws-region: ${{ env.AWS_REGION }}
