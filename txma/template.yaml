@@ -21,11 +21,15 @@ Parameters:
   PermissionsBoundary:
     Type: String
 
+Conditions:
+  IsProdLikeEnvironment: !Or
+    - !Equals [ !Ref Environment, staging ]
+    - !Equals [ !Ref Environment, integration ]
+    - !Equals [ !Ref Environment, production ]
+
 Mappings:
   TxMARootMapping:
     Environment:
-      dev: "arn:aws:iam::178023842775:root"
-      build: "arn:aws:iam::178023842775:root"
       staging: "arn:aws:iam::178023842775:root"
       integration: "arn:aws:iam::729485541398:root"
       production: "arn:aws:iam::451773080033:root"
@@ -61,7 +65,17 @@ Resources:
         - !Ref AuditEventQueue
       PolicyDocument:
         Statement:
+          - Sid: "EnableRootMessageAccess"
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "sqs:ReceiveMessage"
+              - "sqs:DeleteMessage"
+              - "sqs:GetQueueAttributes"
+            Resource: !GetAtt AuditEventQueue.Arn
           - Sid: "AllowReadByTXMAAccount"
+            Condition: IsProdLikeEnvironment
             Effect: Allow
             Principal:
               AWS: !FindInMap [TxMARootMapping, Environment, !Ref 'Environment']
