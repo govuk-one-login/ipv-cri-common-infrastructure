@@ -51,7 +51,7 @@ jobs:
           version: 1.74.0
 
       - name: Assume temporary AWS role
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: ${{ secrets[matrix.GH_ACTIONS_ROLE_ARN_SECRET] }}
           aws-region: ${{ env.AWS_REGION }}
@@ -114,7 +114,7 @@ jobs:
           version: 1.74.0
 
       - name: Assume temporary AWS role
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: ${{ secrets[matrix.GH_ACTIONS_ROLE_ARN_SECRET] }}
           aws-region: ${{ env.AWS_REGION }}
