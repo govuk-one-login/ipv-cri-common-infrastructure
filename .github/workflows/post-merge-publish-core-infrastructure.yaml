@@ -9,33 +9,45 @@ on:
 
 jobs:
   publish_core_to_matrix_dev:
+    name: Publish core to ${{ matrix.target }} dev
     strategy:
       matrix:
-        target: [ ADDRESS_DEV, KBV_DEV, TOY_DEV, DL_DEV, PASSPORTA_DEV, HMRC_KBV_DEV, HMRC_CHECK_DEV ]
+        target: [ ADDRESS_DEV, DL_DEV, FRAUD_DEV, HMRC_CHECK_DEV, HMRC_KBV_DEV, KBV_DEV, PASSPORT_DEV, TOY_DEV ]
         include:
           - target: ADDRESS_DEV
+            ENABLED: "${{ vars.ADDRESS_DEV_ENABLED }}"
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: ADDRESS_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_SECRET: ADDRESS_DEV_CORE_GH_ACTIONS_ROLE_ARN
-          - target: KBV_DEV
-            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: KBV_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
-            GH_ACTIONS_ROLE_ARN_SECRET: KBV_DEV_CORE_GH_ACTIONS_ROLE_ARN
-          - target: TOY_DEV
-            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: TOY_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
-            GH_ACTIONS_ROLE_ARN_SECRET: TOY_DEV_CORE_GH_ACTIONS_ROLE_ARN
           - target: DL_DEV
+            ENABLED: "${{ vars.DL_DEV_ENABLED }}"
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: DL_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_SECRET: DL_DEV_CORE_GH_ACTIONS_ROLE_ARN
-          - target: PASSPORTA_DEV
-            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: PASSPORTA_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
-            GH_ACTIONS_ROLE_ARN_SECRET: PASSPORTA_DEV_CORE_GH_ACTIONS_ROLE_ARN
-          - target: HMRC_KBV_DEV
-            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: HMRC_KBV_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
-            GH_ACTIONS_ROLE_ARN_SECRET: HMRC_KBV_DEV_CORE_GH_ACTIONS_ROLE_ARN
+          - target: FRAUD_DEV
+            ENABLED: "${{ vars.FRAUD_DEV_ENABLED }}"
+            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: FRAUD_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: FRAUD_DEV_CORE_GH_ACTIONS_ROLE_ARN
           - target: HMRC_CHECK_DEV
+            ENABLED: "${{ vars.HMRC_CHECK_DEV_ENABLED }}"
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: HMRC_CHECK_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_SECRET: HMRC_CHECK_DEV_CORE_GH_ACTIONS_ROLE_ARN
-      max-parallel: 2
-    name: Publish core infrastructure to dev
+          - target: HMRC_KBV_DEV
+            ENABLED: "${{ vars.HMRC_KBV_DEV_ENABLED }}"
+            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: HMRC_KBV_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: HMRC_KBV_DEV_CORE_GH_ACTIONS_ROLE_ARN
+          - target: KBV_DEV
+            ENABLED: "${{ vars.KBV_DEV_ENABLED }}"
+            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: KBV_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: KBV_DEV_CORE_GH_ACTIONS_ROLE_ARN
+          - target: PASSPORT_DEV
+            ENABLED: "${{ vars.PASSPORT_DEV_ENABLED }}"
+            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: PASSPORTA_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: PASSPORTA_DEV_CORE_GH_ACTIONS_ROLE_ARN
+          - target: TOY_DEV
+            ENABLED: "${{ vars.TOY_DEV_ENABLED }}"
+            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: TOY_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: TOY_DEV_CORE_GH_ACTIONS_ROLE_ARN
+
+
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -44,67 +56,86 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        if: matrix.ENABLED == 'true'
+        uses: actions/checkout@v3
 
       - name: Setup Python
+        if: matrix.ENABLED == 'true'
         uses: actions/setup-python@v4
         with:
           python-version: 3.11.2
 
       - name: Setup SAM
+        if: matrix.ENABLED == 'true'
         uses: aws-actions/setup-sam@v2
         with:
           version: 1.74.0
 
       - name: Assume temporary AWS role
+        if: matrix.ENABLED == 'true'
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ secrets[matrix.GH_ACTIONS_ROLE_ARN_SECRET] }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: SAM Validate
+        if: matrix.ENABLED == 'true'
         run: sam validate --region ${{ env.AWS_REGION }} -t core/template.yaml
 
       - name: Deploy SAM template
+        if: matrix.ENABLED == 'true'
         uses: alphagov/di-devplatform-upload-action@v3.2
         with:
             artifact-bucket-name: ${{ secrets[matrix.ARTIFACT_SOURCE_BUCKET_NAME_SECRET] }}
             signing-profile-name: ""
             working-directory: ./core
+
+      - name: Inform of disabled status
+        if: matrix.ENABLED != 'true'
+        run: echo "🔶 Set repository variable ${{ matrix.target }}_ENABLED to 'true' to enable	🔶" >> $GITHUB_STEP_SUMMARY
 
 
   publish_core_to_matrix_build:
+    name: Publish core to ${{ matrix.target }} build
     needs: publish_core_to_matrix_dev
     strategy:
       matrix:
-        target: [ ADDRESS_BUILD, FRAUD_BUILD, KBV_BUILD, DL_BUILD, PASSPORTA_BUILD, TOY_BUILD, HMRC_KBV_BUILD, HMRC_CHECK_BUILD ]
+        target: [ ADDRESS_BUILD, DL_BUILD, FRAUD_BUILD, HMRC_CHECK_BUILD, HMRC_KBV_BUILD, KBV_BUILD, PASSPORT_BUILD, TOY_BUILD ]
         include:
           - target: ADDRESS_BUILD
+            ENABLED: "${{ vars.ADDRESS_BUILD_ENABLED }}"
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: ADDRESS_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_SECRET: ADDRESS_BUILD_CORE_GH_ACTIONS_ROLE_ARN
-          - target: FRAUD_BUILD
-            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: FRAUD_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
-            GH_ACTIONS_ROLE_ARN_SECRET: FRAUD_BUILD_CORE_GH_ACTIONS_ROLE_ARN
-          - target: KBV_BUILD
-            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: KBV_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
-            GH_ACTIONS_ROLE_ARN_SECRET: KBV_BUILD_CORE_GH_ACTIONS_ROLE_ARN
           - target: DL_BUILD
+            ENABLED: "${{ vars.DL_BUILD_ENABLED }}"
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: DL_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_SECRET: DL_BUILD_CORE_GH_ACTIONS_ROLE_ARN
-          - target: PASSPORTA_BUILD
+          - target: FRAUD_BUILD
+            ENABLED: "${{ vars.FRAUD_BUILD_ENABLED }}"
+            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: FRAUD_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: FRAUD_BUILD_CORE_GH_ACTIONS_ROLE_ARN
+          - target: HMRC_CHECK_BUILD
+            ENABLED: "${{ vars.HMRC_CHECK_BUILD_ENABLED }}"
+            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: HMRC_CHECK_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: HMRC_CHECK_BUILD_CORE_GH_ACTIONS_ROLE_ARN
+          - target: HMRC_KBV_BUILD
+            ENABLED: "${{ vars.HMRC_KBV_BUILD_ENABLED }}"
+            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: HMRC_KBV_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: HMRC_KBV_BUILD_CORE_GH_ACTIONS_ROLE_ARN
+          - target: KBV_BUILD
+            ENABLED: "${{ vars.KBV_BUILD_ENABLED }}"
+            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: KBV_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: KBV_BUILD_CORE_GH_ACTIONS_ROLE_ARN
+          - target: PASSPORT_BUILD
+            ENABLED: "${{ vars.PASSPORT_BUILD_ENABLED }}"
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: PASSPORTA_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_SECRET: PASSPORTA_BUILD_CORE_GH_ACTIONS_ROLE_ARN
           - target: TOY_BUILD
+            ENABLED: "${{ vars.TOY_BUILD_ENABLED }}"
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: TOY_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_SECRET: TOY_BUILD_CORE_GH_ACTIONS_ROLE_ARN
-          - target: HMRC_KBV_BUILD
-            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: HMRC_KBV_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
-            GH_ACTIONS_ROLE_ARN_SECRET: HMRC_KBV_BUILD_CORE_GH_ACTIONS_ROLE_ARN
-          - target: HMRC_CHECK_BUILD
-            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: HMRC_CHECK_BUILD_CORE_ARTIFACT_SOURCE_BUCKET_NAME
-            GH_ACTIONS_ROLE_ARN_SECRET: HMRC_CHECK_BUILD_CORE_GH_ACTIONS_ROLE_ARN
-      max-parallel: 2
-    name: Publish core infrastructure to build
+
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -113,32 +144,42 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        if: matrix.ENABLED == 'true'
+        uses: actions/checkout@v3
 
       - name: Setup Python
+        if: matrix.ENABLED == 'true'
         uses: actions/setup-python@v4
         with:
           python-version: 3.11.2
 
       - name: Setup SAM
+        if: matrix.ENABLED == 'true'
         uses: aws-actions/setup-sam@v2
         with:
           version: 1.74.0
 
       - name: Assume temporary AWS role
+        if: matrix.ENABLED == 'true'
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ secrets[matrix.GH_ACTIONS_ROLE_ARN_SECRET] }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: SAM Validate
+        if: matrix.ENABLED == 'true'
         run: sam validate --region ${{ env.AWS_REGION }} -t core/template.yaml
 
+
       - name: Deploy SAM template
+        if: matrix.ENABLED == 'true'
         uses: alphagov/di-devplatform-upload-action@v3.2
         with:
             artifact-bucket-name: ${{ secrets[matrix.ARTIFACT_SOURCE_BUCKET_NAME_SECRET] }}
             signing-profile-name: ""
             working-directory: ./core
 
-
+      - name: Inform of disabled status
+        if: matrix.ENABLED != 'true'
+        run: echo "🔶 Set repository variable ${{ matrix.target }}_ENABLED to 'true' to enable	🔶" >> $GITHUB_STEP_SUMMARY
