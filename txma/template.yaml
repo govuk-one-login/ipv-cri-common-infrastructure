@@ -34,7 +34,8 @@ Resources:
   AuditEventQueue:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: 604800 # 7 days
+      MessageRetentionPeriod: 1209600 # 14 days
+      VisibilityTimeout: 70
       KmsMasterKeyId: !Ref AuditEventQueueEncryptionKeyAlias
       RedriveAllowPolicy:
         redrivePermission: denyAll
@@ -50,7 +51,7 @@ Resources:
         - Key: Service
           Value: "ci/cd"
         - Key: Source
-          Value: "alphagov/di-ipv-cri-common-infrastructure/sqs/template.yaml"
+          Value: "govuk-one-login/ipv-cri-common-infrastructure/txma/template.yaml"
         - Key: Updated
           Value: "2023-01-23"
 
@@ -74,7 +75,8 @@ Resources:
   AuditEventDeadLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: 604800 # 7 days
+      MessageRetentionPeriod: 1209600 # 14 days
+      VisibilityTimeout: 70
       KmsMasterKeyId: !Ref AuditEventQueueEncryptionKeyAlias
       Tags:
         - Key: Name
@@ -85,7 +87,7 @@ Resources:
         - Key: Service
           Value: "ci/cd"
         - Key: Source
-          Value: "alphagov/di-ipv-cri-common-infrastructure/sqs/template.yaml"
+          Value: "govuk-one-login/ipv-cri-common-infrastructure/txma/template.yaml"
         - Key: Updated
           Value: "2023-01-23"
 
@@ -121,7 +123,7 @@ Resources:
         - Key: Service
           Value: "ci/cd"
         - Key: Source
-          Value: "alphagov/di-ipv-cri-common-infrastructure/sqs/template.yaml"
+          Value: "govuk-one-login/ipv-cri-common-infrastructure/txma/template.yaml"
 
   AuditEventQueueEncryptionKeyAlias:
     Type: AWS::KMS::Alias
@@ -165,7 +167,7 @@ Resources:
         - Key: Service
           Value: "ci/cd"
         - Key: Source
-          Value: "alphagov/di-ipv-cri-common-infrastructure/sqs/template.yaml"
+          Value: "govuk-one-login/ipv-cri-common-infrastructure/txma/template.yaml"
 
 Outputs:
   AuditEventQueueName:
