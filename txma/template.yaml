@@ -34,8 +34,9 @@ Resources:
   AuditEventQueue:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: 604800 # 7 days
       KmsMasterKeyId: !Ref AuditEventQueueEncryptionKeyAlias
+      MessageRetentionPeriod: 1209600 # 14 days
+      VisibilityTimeout: 70
       RedriveAllowPolicy:
         redrivePermission: denyAll
       RedrivePolicy:
@@ -74,8 +75,9 @@ Resources:
   AuditEventDeadLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: 604800 # 7 days
       KmsMasterKeyId: !Ref AuditEventQueueEncryptionKeyAlias
+      MessageRetentionPeriod: 1209600 # 14 days
+      VisibilityTimeout: 70
       Tags:
         - Key: Name
           Value: !Join
