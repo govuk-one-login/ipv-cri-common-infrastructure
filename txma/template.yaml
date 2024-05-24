@@ -71,6 +71,19 @@ Resources:
               - "sqs:DeleteMessage"
               - "sqs:GetQueueAttributes"
             Resource: !GetAtt AuditEventQueue.Arn
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: SQS:SendMessage
+            Resource: !GetAtt AuditEventQueue.Arn
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action:
+              - "kms:Decrypt"
+              - "kms:GenerateDataKey"
+            Resource:
+              - !GetAtt AuditEventQueueEncryptionKey.Arn
 
   AuditEventDeadLetterQueue:
     Type: AWS::SQS::Queue
