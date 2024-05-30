@@ -1,16 +1,10 @@
-# di-ipv-cri-common-infrastructure
-Core Infrastructure for the Address CRI
+# di-ipv-cri-common-infrastructure: Core Infrastructure shared by CRIs
 
-This repository is the home for common CRI supporting Cloud Formation infrastructure which is shared or sensitive.
+This repository is the home for common CRI supporting Cloud Formation infrastructure which is shared or sensitive. The code in this repository is deployed and promoted through the environments using GitHub actions and the dev platform team implementation. If you are making changes to this repo please update [RELEASE_NOTES](./RELEASE_NOTES.md) so that teams can check for changes before re-deploying.
 
-The code in this repository is deployed and promoted through the environments using GitHub actions and
-the dev platform team implementation.
+The automated deployments are triggered on a push to main after PR approval. GitHub secrets are required for deployment.
 
-The automated deployments are triggered on a push to main after PR approval.
-
-GitHub secrets are required for deployment.
-
-Required GitHub secrets:
+## Required GitHub secrets:
 
 Core secrets for dev environments:
 
