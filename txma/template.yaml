@@ -76,14 +76,6 @@ Resources:
               Service: events.amazonaws.com
             Action: SQS:SendMessage
             Resource: !GetAtt AuditEventQueue.Arn
-          - Effect: Allow
-            Principal:
-              Service: events.amazonaws.com
-            Action:
-              - "kms:Decrypt"
-              - "kms:GenerateDataKey"
-            Resource:
-              - !GetAtt AuditEventQueueEncryptionKey.Arn
 
   AuditEventDeadLetterQueue:
     Type: AWS::SQS::Queue
@@ -127,6 +119,13 @@ Resources:
             Action:
               - 'kms:decrypt'
             Resource: '*'
+          - Sid: 'Allow EventBridge to generate data key and decrypt'
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action:
+              - "kms:decrypt"
+              - "kms:GenerateDataKey"
       Tags:
         - Key: Name
           Value: !Join
