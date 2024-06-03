@@ -126,6 +126,7 @@ Resources:
             Action:
               - "kms:decrypt"
               - "kms:GenerateDataKey"
+            Resource: '*'
       Tags:
         - Key: Name
           Value: !Join
