@@ -1,30 +1,26 @@
 AWSTemplateFormatVersion: "2010-09-09"
-
 Description: SQS queues for audit events
+Transform: AWS::LanguageExtensions
 
 Parameters:
-  CodeSigningConfigArn:
-    Type: String
-    Default: "none"
-    Description: >
-      The ARN of the Code Signing Config to use, provided by the deployment pipeline
-  Environment:
-    Description: "The target environment"
-    Type: "String"
-    AllowedValues:
-      - "dev"
-      - "build"
-      - "staging"
-      - "integration"
-      - "production"
-    ConstraintDescription: must be dev, build, staging, integration or production
   PermissionsBoundary:
     Type: String
+    Default: ""
+  Environment:
+    Description: The target environment
+    Type: String
+    Default: dev
+    AllowedValues: [dev, build, staging, integration, production]
+    ConstraintDescription: must be dev, build, staging, integration or production
+
+Conditions:
+  IsDevEnvironment: !Equals [!Ref Environment, dev]
+  IsNotDevEnvironment: !Not [!Condition IsDevEnvironment]
+  UsePermissionsBoundary: !Not [!Equals [!Ref PermissionsBoundary, ""]]
 
 Mappings:
   TxMARootMapping:
     Environment:
-      dev: "arn:aws:iam::178023842775:root"
       build: "arn:aws:iam::178023842775:root"
       staging: "arn:aws:iam::178023842775:root"
       integration: "arn:aws:iam::729485541398:root"
@@ -34,67 +30,58 @@ Resources:
   AuditEventQueue:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: 1209600 # 14 days
-      VisibilityTimeout: 70
+      MessageRetentionPeriod: !If [IsDevEnvironment, "3600", "1209600"] # 1 hour in dev, 14 days otherwise
+      VisibilityTimeout: !If [IsDevEnvironment, "30", "70"]
       KmsMasterKeyId: !Ref AuditEventQueueEncryptionKeyAlias
+      ReceiveMessageWaitTimeSeconds: 20
       RedriveAllowPolicy:
         redrivePermission: denyAll
-      RedrivePolicy:
-        deadLetterTargetArn: !GetAtt AuditEventDeadLetterQueue.Arn
-        maxReceiveCount: 10
+      RedrivePolicy: !If
+        - IsDevEnvironment
+        - !Ref AWS::NoValue
+        - deadLetterTargetArn: !GetAtt AuditEventDeadLetterQueue.Arn
+          maxReceiveCount: 10
       Tags:
-        - Key: Name
-          Value: !Join
-            - "-"
-            - - !Ref AWS::StackName
-              - "auditEventQueue"
         - Key: Service
-          Value: "ci/cd"
+          Value: ci/cd
         - Key: Source
-          Value: "govuk-one-login/ipv-cri-common-infrastructure/txma/template.yaml"
-        - Key: Updated
-          Value: "2023-01-23"
+          Value: govuk-one-login/ipv-cri-common-infrastructure/txma/template.yaml
 
   AuditEventQueuePolicy:
     Type: AWS::SQS::QueuePolicy
+    Condition: IsNotDevEnvironment
     Properties:
-      Queues:
-        - !Ref AuditEventQueue
+      Queues: [!Ref AuditEventQueue]
       PolicyDocument:
         Statement:
-          - Sid: "AllowReadByTXMAAccount"
+          - Sid: "Allow read by TxMA account"
             Effect: Allow
             Principal:
-              AWS: !FindInMap [TxMARootMapping, Environment, !Ref 'Environment']
+              AWS: !FindInMap [TxMARootMapping, Environment, !Ref Environment]
             Action:
-              - "sqs:ReceiveMessage"
-              - "sqs:DeleteMessage"
-              - "sqs:GetQueueAttributes"
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
             Resource: !GetAtt AuditEventQueue.Arn
-          - Effect: Allow
+          - Sid: "Allow EventBridge to send TxMA events"
+            Effect: Allow
             Principal:
               Service: events.amazonaws.com
-            Action: SQS:SendMessage
+            Action: sqs:SendMessage
             Resource: !GetAtt AuditEventQueue.Arn
 
   AuditEventDeadLetterQueue:
     Type: AWS::SQS::Queue
+    Condition: IsNotDevEnvironment
     Properties:
       MessageRetentionPeriod: 1209600 # 14 days
       VisibilityTimeout: 70
       KmsMasterKeyId: !Ref AuditEventQueueEncryptionKeyAlias
       Tags:
-        - Key: Name
-          Value: !Join
-            - "-"
-            - - !Ref AWS::StackName
-              - "auditEventDeadLetterQueue"
         - Key: Service
-          Value: "ci/cd"
+          Value: ci/cd
         - Key: Source
-          Value: "govuk-one-login/ipv-cri-common-infrastructure/txma/template.yaml"
-        - Key: Updated
-          Value: "2023-01-23"
+          Value: govuk-one-login/ipv-cri-common-infrastructure/txma/template.yaml
 
   AuditEventQueueEncryptionKey:
     Type: AWS::KMS::Key
@@ -103,40 +90,38 @@ Resources:
       EnableKeyRotation: true
       KeySpec: SYMMETRIC_DEFAULT
       KeyPolicy:
-        Version: '2012-10-17'
+        Version: 2012-10-17
         Statement:
-          - Sid: 'Enable Root access'
+          - Sid: "Enable root access"
             Effect: Allow
             Principal:
-              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
-            Action:
-              - 'kms:*'
-            Resource: '*'
-          - Sid: 'Allow decryption of events by TXMA'
-            Effect: Allow
-            Principal:
-              AWS: !FindInMap [TxMARootMapping, Environment, !Ref 'Environment']
-            Action:
-              - 'kms:decrypt'
-            Resource: '*'
-          - Sid: 'Allow EventBridge to generate data key and decrypt'
-            Effect: Allow
-            Principal:
-              Service: events.amazonaws.com
-            Action:
-              - "kms:decrypt"
-              - "kms:GenerateDataKey"
-            Resource: '*'
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: "*"
+          - !If
+            - IsDevEnvironment
+            - !Ref AWS::NoValue
+            - - Sid: "Allow decryption of events by TXMA"
+                Effect: Allow
+                Principal:
+                  AWS: !FindInMap [TxMARootMapping, Environment, !Ref 'Environment']
+                Action: kms:decrypt
+                Resource: "*"
+              - Sid: "Allow EventBridge to generate data key and decrypt"
+                Effect: Allow
+                Principal:
+                  Service: events.amazonaws.com
+                Action:
+                  - kms:decrypt
+                  - kms:GenerateDataKey
+                Resource: "*"
       Tags:
         - Key: Name
-          Value: !Join
-            - "-"
-            - - !Ref AWS::StackName
-              - "auditEventQueueEncryptionKey"
+          Value: !Sub ${AWS::StackName}-auditEventQueueEncryptionKey
         - Key: Service
-          Value: "ci/cd"
+          Value: ci/cd
         - Key: Source
-          Value: "govuk-one-login/ipv-cri-common-infrastructure/txma/template.yaml"
+          Value: govuk-one-login/ipv-cri-common-infrastructure/txma/template.yaml
 
   AuditEventQueueEncryptionKeyAlias:
     Type: AWS::KMS::Alias
@@ -146,20 +131,19 @@ Resources:
 
   AuditEventQueueConsumerRole:
     Type: AWS::IAM::Role
+    Condition: IsNotDevEnvironment
     Properties:
       Description: >
         A role to use in the SQS queue and KMS key policies. To be overridden in envs other than dev and build with
         supplied TXMA roles when they exist.
-      PermissionsBoundary: !Ref PermissionsBoundary
+      PermissionsBoundary: !If [UsePermissionsBoundary, !Ref PermissionsBoundary, !Ref AWS::NoValue]
       AssumeRolePolicyDocument:
-        Version: "2012-10-17"
+        Version: 2012-10-17
         Statement:
           - Effect: Allow
             Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - 'sts:AssumeRole'
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
       Policies:
         - PolicyName: AWSLambdaBasicExecutionRole
           PolicyDocument:
@@ -167,20 +151,17 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - "logs:CreateLogGroup"
-                  - "logs:CreateLogStream"
-                  - "logs:PutLogEvents"
-                Resource: '*'
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
       Tags:
         - Key: Name
-          Value: !Join
-            - "-"
-            - - !Ref AWS::StackName
-              - "auditEventQueueConsumerRole"
+          Value: !Sub ${AWS::StackName}-auditEventQueueConsumerRole
         - Key: Service
-          Value: "ci/cd"
+          Value: ci/cd
         - Key: Source
-          Value: "govuk-one-login/ipv-cri-common-infrastructure/txma/template.yaml"
+          Value: govuk-one-login/ipv-cri-common-infrastructure/txma/template.yaml
 
 Outputs:
   AuditEventQueueName:
