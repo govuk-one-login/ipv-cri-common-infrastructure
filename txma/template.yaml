@@ -83,6 +83,21 @@ Resources:
         - Key: Source
           Value: govuk-one-login/ipv-cri-common-infrastructure/txma/template.yaml
 
+  AuditEventDeadLetterQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref AuditEventDeadLetterQueue
+      PolicyDocument:
+        Statement:
+          - Sid: "Allow EventBridge to send TxMA events"
+            Effect: Allow
+            Principal:
+              Service: "events.amazonaws.com"
+            Action:
+              - "sqs:SendMessage"
+            Resource: !GetAtt AuditEventDeadLetterQueue.Arn
+
   AuditEventQueueEncryptionKey:
     Type: AWS::KMS::Key
     Properties:
