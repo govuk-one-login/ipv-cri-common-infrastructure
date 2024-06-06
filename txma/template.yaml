@@ -101,20 +101,23 @@ Resources:
           - !If
             - IsDevEnvironment
             - !Ref AWS::NoValue
-            - - Sid: "Allow decryption of events by TXMA"
-                Effect: Allow
-                Principal:
-                  AWS: !FindInMap [TxMARootMapping, Environment, !Ref 'Environment']
-                Action: kms:decrypt
-                Resource: "*"
-              - Sid: "Allow EventBridge to generate data key and decrypt"
-                Effect: Allow
-                Principal:
-                  Service: events.amazonaws.com
-                Action:
-                  - kms:decrypt
-                  - kms:GenerateDataKey
-                Resource: "*"
+            - Sid: "Allow decryption of events by TXMA"
+              Effect: Allow
+              Principal:
+                AWS: !FindInMap [TxMARootMapping, Environment, !Ref 'Environment']
+              Action: kms:decrypt
+              Resource: "*"
+          - !If
+            - IsDevEnvironment
+            - !Ref AWS::NoValue
+            - Sid: "Allow EventBridge to generate data key and decrypt"
+              Effect: Allow
+              Principal:
+                Service: events.amazonaws.com
+              Action:
+                - kms:decrypt
+                - kms:GenerateDataKey
+              Resource: "*"
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-auditEventQueueEncryptionKey
