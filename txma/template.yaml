@@ -85,9 +85,9 @@ Resources:
 
   AuditEventDeadLetterQueuePolicy:
     Type: AWS::SQS::QueuePolicy
+    Condition: IsNotDevEnvironment
     Properties:
-      Queues:
-        - !Ref AuditEventDeadLetterQueue
+      Queues: [!Ref AuditEventDeadLetterQueue]
       PolicyDocument:
         Statement:
           - Sid: "Allow EventBridge to send TxMA events"
