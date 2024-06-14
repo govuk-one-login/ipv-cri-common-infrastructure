@@ -217,3 +217,10 @@ Outputs:
     Value: !GetAtt AuditEventQueueEncryptionKey.Arn
     Export:
       Name: AuditEventQueueEncryptionKeyArn
+
+  AuditEventDLQArn:
+    Condition: IsNotDevEnvironment
+    Description: The ARN of the audit event SQS queue DLQ
+    Value: !GetAtt AuditEventDeadLetterQueue.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-AuditEventDLQArn
