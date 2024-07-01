@@ -1,8 +1,13 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
--   repo: https://github.com/Yelp/detect-secrets
+  - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
-    -   id: detect-secrets
+      - id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
+  - repo: https://github.com/aws-cloudformation/cfn-lint
+    rev: v0.86.0
+    hooks:
+      - id: cfn-lint
+        files: .template\.ya?ml$

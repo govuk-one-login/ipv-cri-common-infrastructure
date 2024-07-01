@@ -2,18 +2,6 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: "AWS::Serverless-2016-10-31"
 Description: "Digital Identity IPV CRI Core Infrastructure"
 
-Parameters:
-  Environment:
-    Description: "The environment type"
-    Type: "String"
-    AllowedValues:
-      - "dev"
-      - "build"
-      - "staging"
-      - "integration"
-      - "production"
-    ConstraintDescription: must be dev, build, staging, integration or production
-
 Resources:
 
   CriVcSigningKey1:
@@ -120,7 +108,7 @@ Resources:
     Type: AWS::SNS::Subscription
     Properties:
       TopicArn: !Ref AlarmTopic
-      Endpoint: !Sub '{{resolve:ssm:/alerting/pagerduty/url}}'
+      Endpoint: '{{resolve:ssm:/alerting/pagerduty/url}}'
       Protocol: https
 
   AlarmPublishToTopicPolicy:

@@ -2,9 +2,6 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: "Cloudformation teamplate for creating address frontend in fargate"
 
 Parameters:
-  EnvironmentName:
-    Description: An environment name that is prefixed to resource names.
-    Type: String
   VPC:
     Description: VPC ID for the services
     Type: String
@@ -22,7 +19,7 @@ Resources:
 
 ################ Role
   ECSTaskExecutionRole:
-    Type: 'AWS::IAM::Role'
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -112,8 +109,7 @@ Resources:
       VpcId: !Ref VPC
 ################ Container Security group
   FargateContainerSG:
-    Type: 'AWS::EC2::SecurityGroup'
-    DependsOn: FargateAlbSG
+    Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref VPC
       GroupDescription: SG for the Fargate containers
@@ -125,10 +121,7 @@ Resources:
 ############### Service
   Service:
     Type: AWS::ECS::Service
-    DependsOn:
-      - FargateContainerSG
-      - ALB
-      - AddressTargetGroup1
+    DependsOn: ALB
     Properties:
       ServiceName: !Sub ${AWS::StackName}-Address-frontend
       LaunchType: FARGATE
