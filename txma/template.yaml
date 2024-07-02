@@ -12,10 +12,19 @@ Parameters:
     Default: dev
     AllowedValues: [dev, build, staging, integration, production]
     ConstraintDescription: must be dev, build, staging, integration or production
+  SupportManualURL:
+    Description: "Link to the CRI specific support manual"
+    Type: String
+    Default: 'https://govukverify.atlassian.net/wiki/spaces/OJ/pages/3303931965/CRI+specific+support'
 
 Conditions:
   IsDevEnvironment: !Equals [!Ref Environment, dev]
+  IsLocalDevEnvironment: !Equals [ !Ref Environment, localdev ]
   IsNotDevEnvironment: !Not [!Condition IsDevEnvironment]
+  IsDevLikeEnvironment:
+    !Or [ !Condition IsLocalDevEnvironment, !Condition IsDevEnvironment ]
+  IsNotDevLikeEnvironment: !Not
+    - !Condition IsDevLikeEnvironment
   UsePermissionsBoundary: !Not [!Equals [!Ref PermissionsBoundary, ""]]
 
 Mappings:
@@ -180,6 +189,80 @@ Resources:
           Value: ci/cd
         - Key: Source
           Value: govuk-one-login/ipv-cri-common-infrastructure/txma/template.yaml
+
+  AuditEventSQSOldMessagesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: IsNotDevLikeEnvironment
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-AuditEventStayedOnQueueForMoreThan24HoursMessagesAlarm"
+      AlarmDescription: !Sub "Triggers CloudWatch Alarm when a message has stayed on the queue for more than 24 Hours ${SupportManualURL}"
+      ActionsEnabled: true
+      OKActions:
+        - !ImportValue platform-alarm-warning-alert-topic
+      AlarmActions:
+        - !ImportValue platform-alarm-warning-alert-topic
+      InsufficientDataActions: [ ]
+      MetricName: ApproximateAgeOfOldestMessage
+      Namespace: AWS/SQS
+      Statistic: Maximum
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt AuditEventQueue.QueueName
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 86400
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  AuditEventDLQMessagesVisibleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: IsNotDevLikeEnvironment
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-AuditEventDLQMessagesVisibleAlarm"
+      AlarmDescription: !Sub "Triggers CloudWatch Alarm when message gets added to audit event DLQ. ${SupportManualURL}"
+      ActionsEnabled: true
+      OKActions:
+        - !ImportValue platform-alarm-warning-alert-topic
+      AlarmActions:
+        - !ImportValue platform-alarm-warning-alert-topic
+      InsufficientDataActions: [ ]
+      Metrics:
+        - Expression: "max-min"
+          Id: "e1"
+          Label: "ChangeInAmountOfVisibleMessages"
+          ReturnData: true
+        - Id: "min"
+          Label: "MessagesVisibleMin"
+          MetricStat:
+            Metric:
+              Dimensions:
+                - Name: QueueName
+                  Value: !GetAtt AuditEventDeadLetterQueue.QueueName
+              MetricName: ApproximateNumberOfMessagesVisible
+              Namespace: AWS/SQS
+            Period: 300 # evaluate maximum over period of 5 min
+            Stat: Minimum
+            Unit: Count
+          ReturnData: false
+        - Id: "max"
+          Label: "MessagesVisibleMax"
+          MetricStat:
+            Metric:
+              Dimensions:
+                - Name: QueueName
+                  Value: !GetAtt AuditEventDeadLetterQueue.QueueName
+              MetricName: ApproximateNumberOfMessagesVisible
+              Namespace: AWS/SQS
+            Period: 300 # evaluate maximum over period of 5 min
+            Stat: Maximum
+            Unit: Count
+          ReturnData: false
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
 
 Outputs:
   AuditEventQueueName:
