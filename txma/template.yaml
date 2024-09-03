@@ -289,6 +289,12 @@ Outputs:
     Export:
       Name: AuditEventQueueUrl
 
+  AuditEventQueueArn:
+    Description: The ARN of the SQS audit event queue. Needed to pull messages off the queue
+    Value: !GetAtt AuditEventQueue.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-AuditEventQueueArn
+
   AuditEventQueueEncryptionKeyArn:
     Description: The ARN of the KMS key used to encrypt audit event messages in the SQS queue
     Value: !GetAtt AuditEventQueueEncryptionKey.Arn
