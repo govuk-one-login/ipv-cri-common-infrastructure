@@ -5,8 +5,10 @@ Description: "Digital Identity IPV CRI Core Infrastructure"
 Parameters:
   Environment:
     Type: String
+    Default: "none"
   ServiceName:
     Type: String
+    Default: "none"
     
 Resources:
 
