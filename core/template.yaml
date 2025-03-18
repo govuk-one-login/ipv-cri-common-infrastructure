@@ -209,13 +209,12 @@ Outputs:
     Export:
       Name: !Sub ${AWS::StackName}-AlarmTopic
 
-Outputs:
   PublishedKeysS3BucketName:
     Value: !Ref PublishedKeysS3Bucket
     Export:
-      Name: !Sub "PublishedKeysS3BucketName-${PublishingType}"
+      Name: !Sub "PublishedKeysS3BucketName"
 
   PublishedKeysS3BucketArn:
     Value: !GetAtt PublishedKeysS3Bucket.Arn
     Export:
-      Name: !Sub "PublishedKeysS3BucketArn-${PublishingType}"
+      Name: !Sub "PublishedKeysS3BucketArn"
