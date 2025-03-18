@@ -2,6 +2,12 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: "AWS::Serverless-2016-10-31"
 Description: "Digital Identity IPV CRI Core Infrastructure"
 
+Parameters:
+  Environment:
+    Type: String
+  ServiceName:
+    Type: String
+    
 Resources:
 
   CriVcSigningKey1:
@@ -128,6 +134,29 @@ Resources:
               ArnLike:
                 AWS:SourceArn: !Sub arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:*
 
+  PublishedKeysS3Bucket:
+    Type: AWS::S3::Bucket
+    # checkov:skip=CKV_AWS_18: "Ensure the S3 bucket has access logging enabled"
+    Properties:
+      BucketName: !Sub "${ServiceName}-${Environment}-key-rotation-bucket"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
+      Tags:
+        - Key: "Description"
+          Value: "Published OAuth or DID keys bucket for key rotation state machine"
+
 Outputs:
 
   TableNameSession1:
@@ -177,3 +206,14 @@ Outputs:
     Value: !Ref AlarmTopic
     Export:
       Name: !Sub ${AWS::StackName}-AlarmTopic
+
+Outputs:
+  PublishedKeysS3BucketName:
+    Value: !Ref PublishedKeysS3Bucket
+    Export:
+      Name: !Sub "PublishedKeysS3BucketName-${PublishingType}"
+
+  PublishedKeysS3BucketArn:
+    Value: !GetAtt PublishedKeysS3Bucket.Arn
+    Export:
+      Name: !Sub "PublishedKeysS3BucketArn-${PublishingType}"
