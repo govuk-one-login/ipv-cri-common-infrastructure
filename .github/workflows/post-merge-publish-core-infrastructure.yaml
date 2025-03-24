@@ -12,7 +12,7 @@ jobs:
     name: Publish core to ${{ matrix.target }} dev
     strategy:
       matrix:
-        target: [ ADDRESS_DEV, COMMON_DEV, DL_DEV, FRAUD_DEV, HMRC_CHECK_DEV, HMRC_KBV_DEV, KBV_DEV, PASSPORT_DEV, TOY_DEV ]
+        target: [ ADDRESS_DEV, COMMON_DEV, DL_DEV, FRAUD_DEV, HMRC_CHECK_DEV, HMRC_KBV_DEV, KBV_DEV, PASSPORT_DEV, TOY_DEV, IDSRE_DEV ]
         include:
           - target: ADDRESS_DEV
             ENABLED: "${{ vars.ADDRESS_DEV_ENABLED }}"
@@ -50,6 +50,10 @@ jobs:
             ENABLED: "${{ vars.TOY_DEV_ENABLED }}"
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: TOY_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_SECRET: TOY_DEV_CORE_GH_ACTIONS_ROLE_ARN
+          - target: IDSRE_DEV
+            ENABLED: "${{ vars.IDSRE_DEV_ENABLED }}"
+            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: IDSRE_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_SECRET: IDSRE_DEV_CORE_GH_ACTIONS_ROLE_ARN
 
 
     runs-on: ubuntu-latest
