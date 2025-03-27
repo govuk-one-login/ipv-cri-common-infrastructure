@@ -3,6 +3,10 @@ Transform: "AWS::Serverless-2016-10-31"
 Description: "Digital Identity IPV CRI Core Infrastructure"
 
 Parameters:
+  # BuildNotificationStackName: ## Commented out for now as not used, so failing linting
+  #   Description: The topic to send key rotation bucket access notifications to
+  #   Type: String
+  #   Default: "none"
   Environment:
     Type: String
     Default: "none"
@@ -165,13 +169,19 @@ Resources:
   PublishedKeysS3BucketLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/aws/PublishedKeysS3BucketLogGroup" #pragma: allowlist secret
+      LogGroupName: !Join
+        - "-"
+        - - !Ref PublishedKeysS3Bucket
+          - "logs"
       RetentionInDays: 30
 
   PublishedKeysLogsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${ServiceName}-${Environment}-key-rotation-bucket-logs"
+      BucketName: !Join
+        - "-"
+        - - !Ref PublishedKeysS3Bucket
+          - "logs"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -227,12 +237,15 @@ Resources:
         - DataResources:
             - Type: AWS::S3::Object
               Values:
-                - !Sub "arn:aws:s3:::${ServiceName}-${Environment}-key-rotation-bucket-logs/"
+                - !Join
+                  - ""
+                  - - !GetAtt PublishedKeysS3Bucket.Arn
+                    - "/"
           IncludeManagementEvents: true
           ReadWriteType: All
       S3BucketName: !Ref PublishedKeysLogsBucket
       EnableLogFileValidation: true
-      CloudWatchLogsLogGroupArn: !GetAtt  PublishedKeysS3BucketLogGroup.Arn
+      CloudWatchLogsLogGroupArn: !GetAtt PublishedKeysS3BucketLogGroup.Arn
       CloudWatchLogsRoleArn: !GetAtt TrailLogGroupRole.Arn
 
   TrailLogGroupRole:
@@ -257,7 +270,7 @@ Resources:
                   - "logs:PutLogEvents"
                 Resource: !GetAtt PublishedKeysS3BucketLogGroup.Arn
 
-  PublishedKeysS3BucketAccessMetricFilter:
+  PublishedKeysS3BucketObjectActionsMetricFilter:
       Type: AWS::Logs::MetricFilter
       Properties:
         LogGroupName: !Ref PublishedKeysS3BucketLogGroup
@@ -266,32 +279,34 @@ Resources:
             - ""
             - - '{'
               - '($.eventSource = s3.amazonaws.com) &&'
-              - '($.eventName = GetObject || $.eventName = DeleteObject || $.eventName = PutObject) &&'
+              - '($.eventName = DeleteObject || $.eventName = PutObject) &&'
               - '($.userIdentity.arn != "'
-              - !Sub arn:aws:iam::${AWS::AccountId}:role/lambda
-              # - "') && $.userIdentity.arn != ('"
-              # - !ImportValue KeyManagementAcceptanceTestRoleArn
+              - !ImportValue OAuthGenerationFunctionRoleArn
+              - '") && ($.userIdentity.arn != "'
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/key-rotation-OAuthGenerationFunctionRole* ## To account for preview stacks
               - '")'
               - '}'
         MetricTransformations:
-          - MetricName: UnauthorisedS3Access
-            MetricNamespace: PublishedKeysS3Bucket
+          - MetricName: UnauthorisedS3ObjectAction
+            MetricNamespace: PublishedKeysBucket
             MetricValue: 1
 
-  PublishedKeysS3BucketAccessAlarm:
+  PublishedKeysS3BucketObjectActionAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: PublishedKeysS3BucketAccessAlarm
-      MetricName: UnauthorisedS3Access
-      Namespace: PublishedKeysS3Bucket
+      AlarmName: PublishedKeysS3BucketObjectActionAlarm
+      AlarmDescription: A role other than the `OAuthGenerationFunctionRole` has attempted to `PutObject` or `DeleteObject`
+      MetricName: UnauthorisedS3ObjectAction
+      Namespace: PublishedKeysBucket
       Statistic: Sum
       Period: 60
       EvaluationPeriods: 1
       Threshold: 0
       ComparisonOperator: GreaterThanThreshold
       TreatMissingData: notBreaching
-      # AlarmActions:
-      #   - !Ref AlarmTopic
+      AlarmActions:
+          - Fn::ImportValue: !Sub "build-notifications-BuildNotificationTopicArn"
+        # - Fn::ImportValue: !Sub "${BuildNotificationStackName}-BuildNotificationTopicArn"
 
 Outputs:
 
