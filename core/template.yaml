@@ -12,102 +12,102 @@ Parameters:
     
 Resources:
 
-  CriVcSigningKey1:
-    Type: AWS::KMS::Key
-    Properties:
-      Description: Asymmetric key used by the CRI for signing verifiable credentials.
-      Enabled: true
-      KeySpec: ECC_NIST_P256
-      KeyUsage: SIGN_VERIFY
-      KeyPolicy:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: 'Enable Root access'
-            Effect: Allow
-            Principal:
-              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
-            Action:
-              - 'kms:*'
-            Resource: '*'
-      Tags:
-        - Key: "jwkset"
-          Value: "true"
-        - Key: "awsStackName"
-          Value: !Sub "${AWS::StackName}"
+  # CriVcSigningKey1:
+  #   Type: AWS::KMS::Key
+  #   Properties:
+  #     Description: Asymmetric key used by the CRI for signing verifiable credentials.
+  #     Enabled: true
+  #     KeySpec: ECC_NIST_P256
+  #     KeyUsage: SIGN_VERIFY
+  #     KeyPolicy:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #         - Sid: 'Enable Root access'
+  #           Effect: Allow
+  #           Principal:
+  #             AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+  #           Action:
+  #             - 'kms:*'
+  #           Resource: '*'
+  #     Tags:
+  #       - Key: "jwkset"
+  #         Value: "true"
+  #       - Key: "awsStackName"
+  #         Value: !Sub "${AWS::StackName}"
 
-  CriDecryptionKey1:
-    Type: AWS::KMS::Key
-    Properties:
-      Description: Asymmetric key used by the CRI to decrypt the Authorization JAR JWE
-      Enabled: true
-      KeySpec: RSA_2048
-      KeyUsage: ENCRYPT_DECRYPT
-      KeyPolicy:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: 'Enable Root access'
-            Effect: Allow
-            Principal:
-              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
-            Action:
-              - 'kms:*'
-            Resource: '*'
-      Tags:
-        - Key: "jwkset"
-          Value: "true"
-        - Key: "awsStackName"
-          Value: !Sub "${AWS::StackName}"
+  # CriDecryptionKey1:
+  #   Type: AWS::KMS::Key
+  #   Properties:
+  #     Description: Asymmetric key used by the CRI to decrypt the Authorization JAR JWE
+  #     Enabled: true
+  #     KeySpec: RSA_2048
+  #     KeyUsage: ENCRYPT_DECRYPT
+  #     KeyPolicy:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #         - Sid: 'Enable Root access'
+  #           Effect: Allow
+  #           Principal:
+  #             AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+  #           Action:
+  #             - 'kms:*'
+  #           Resource: '*'
+  #     Tags:
+  #       - Key: "jwkset"
+  #         Value: "true"
+  #       - Key: "awsStackName"
+  #         Value: !Sub "${AWS::StackName}"
 
-  SessionTable1:
-    Type: "AWS::DynamoDB::Table"
-    Properties:
-      TableName: !Sub "${AWS::StackName}-session1"
-      BillingMode: "PAY_PER_REQUEST"
-      AttributeDefinitions:
-        - AttributeName: "sessionId"
-          AttributeType: "S"
-        - AttributeName: "authorizationCode"
-          AttributeType: "S"
-        - AttributeName: "accessToken"
-          AttributeType: "S"
-      KeySchema:
-        - AttributeName: "sessionId"
-          KeyType: "HASH"
-      GlobalSecondaryIndexes:
-        - IndexName: "authorizationCode-index"
-          KeySchema:
-            - AttributeName: "authorizationCode"
-              KeyType: "HASH"
-          Projection:
-            NonKeyAttributes:
-              - "sessionId"
-              - "redirectUri"
-              - "clientId"
-            ProjectionType: "INCLUDE"
-        - IndexName: "access-token-index"
-          KeySchema:
-            - AttributeName: "accessToken"
-              KeyType: "HASH"
-          Projection:
-            NonKeyAttributes:
-              - "sessionId"
-              - "subject"
-            ProjectionType: "INCLUDE"
-      TimeToLiveSpecification:
-        AttributeName: expiry-date
-        Enabled: true
+  # SessionTable1:
+  #   Type: "AWS::DynamoDB::Table"
+  #   Properties:
+  #     TableName: !Sub "${AWS::StackName}-session1"
+  #     BillingMode: "PAY_PER_REQUEST"
+  #     AttributeDefinitions:
+  #       - AttributeName: "sessionId"
+  #         AttributeType: "S"
+  #       - AttributeName: "authorizationCode"
+  #         AttributeType: "S"
+  #       - AttributeName: "accessToken"
+  #         AttributeType: "S"
+  #     KeySchema:
+  #       - AttributeName: "sessionId"
+  #         KeyType: "HASH"
+  #     GlobalSecondaryIndexes:
+  #       - IndexName: "authorizationCode-index"
+  #         KeySchema:
+  #           - AttributeName: "authorizationCode"
+  #             KeyType: "HASH"
+  #         Projection:
+  #           NonKeyAttributes:
+  #             - "sessionId"
+  #             - "redirectUri"
+  #             - "clientId"
+  #           ProjectionType: "INCLUDE"
+  #       - IndexName: "access-token-index"
+  #         KeySchema:
+  #           - AttributeName: "accessToken"
+  #             KeyType: "HASH"
+  #         Projection:
+  #           NonKeyAttributes:
+  #             - "sessionId"
+  #             - "subject"
+  #           ProjectionType: "INCLUDE"
+  #     TimeToLiveSpecification:
+  #       AttributeName: expiry-date
+  #       Enabled: true
 
-  ApiKey1:
-    Type: AWS::ApiGateway::ApiKey
-    Properties:
-      Description: Api key 1
-      Enabled: true
+  # ApiKey1:
+  #   Type: AWS::ApiGateway::ApiKey
+  #   Properties:
+  #     Description: Api key 1
+  #     Enabled: true
 
-  ApiKey2:
-    Type: AWS::ApiGateway::ApiKey
-    Properties:
-      Description: Api key 2
-      Enabled: true
+  # ApiKey2:
+  #   Type: AWS::ApiGateway::ApiKey
+  #   Properties:
+  #     Description: Api key 2
+  #     Enabled: true
 
   AlarmTopic:
     Type: AWS::SNS::Topic
@@ -141,6 +141,9 @@ Resources:
     # checkov:skip=CKV_AWS_18: "Ensure the S3 bucket has access logging enabled"
     Properties:
       BucketName: !Sub "${ServiceName}-${Environment}-key-rotation-bucket"
+      # LoggingConfiguration:
+      #   DestinationBucketName: !Ref PublishedKeysLogsBucket
+      #   LogFilePrefix: "logs/PublishedKeysS3Logs"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -159,49 +162,180 @@ Resources:
         - Key: "Description"
           Value: "Published OAuth or DID keys bucket for key rotation state machine"
 
+  PublishedKeysS3BucketLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/PublishedKeysS3BucketLogGroup" #pragma: allowlist secret
+      RetentionInDays: 30
+
+  PublishedKeysLogsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ServiceName}-${Environment}-key-rotation-bucket-logs"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+
+  PublishedKeysLogsBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref PublishedKeysLogsBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "s3:GetBucketAcl"
+            Principal:
+              Service: "cloudtrail.amazonaws.com"
+            Resource: !Sub "arn:aws:s3:::${PublishedKeysLogsBucket}"
+          - Effect: Allow
+            Action: "s3:PutObject"
+            Principal:
+              Service: "cloudtrail.amazonaws.com"
+            Resource: !Sub "arn:aws:s3:::${PublishedKeysLogsBucket}/AWSLogs/${AWS::AccountId}/*"
+            Condition:
+              StringEquals:
+                "s3:x-amz-acl": "bucket-owner-full-control"
+          - Effect: Deny
+            Action: "s3:*"
+            Principal: "*"
+            Resource:
+              - !GetAtt PublishedKeysLogsBucket.Arn
+              - !Sub "${PublishedKeysLogsBucket.Arn}/*"
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
+          
+  Trail:
+    DependsOn:
+      - PublishedKeysLogsBucketPolicy
+    Type: AWS::CloudTrail::Trail
+    Properties:
+      TrailName: !Sub "${Environment}-${AWS::StackName}-cloudtrail"
+      IncludeGlobalServiceEvents: true
+      IsLogging: true
+      IsMultiRegionTrail: false
+      EventSelectors:
+        - DataResources:
+            - Type: AWS::S3::Object
+              Values:
+                - !Sub "arn:aws:s3:::${ServiceName}-${Environment}-key-rotation-bucket-logs/"
+          IncludeManagementEvents: true
+          ReadWriteType: All
+      S3BucketName: !Ref PublishedKeysLogsBucket
+      EnableLogFileValidation: true
+      CloudWatchLogsLogGroupArn: !GetAtt  PublishedKeysS3BucketLogGroup.Arn
+      CloudWatchLogsRoleArn: !GetAtt TrailLogGroupRole.Arn
+
+  TrailLogGroupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "sts:AssumeRole"
+            Principal:
+              Service:
+                - "cloudtrail.amazonaws.com"
+      Policies:
+        - PolicyName: !Sub "${AWS::StackName}-PublishedKeysS3BucketCloudtrailLogGroupRole"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: !GetAtt PublishedKeysS3BucketLogGroup.Arn
+
+  PublishedKeysS3BucketAccessMetricFilter:
+      Type: AWS::Logs::MetricFilter
+      Properties:
+        LogGroupName: !Ref PublishedKeysS3BucketLogGroup
+        FilterPattern:
+          Fn::Join:
+            - ""
+            - - '{'
+              - '($.eventSource = s3.amazonaws.com) &&'
+              - '($.eventName = GetObject || $.eventName = DeleteObject || $.eventName = PutObject) &&'
+              - '($.userIdentity.arn != "'
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/lambda
+              # - "') && $.userIdentity.arn != ('"
+              # - !ImportValue KeyManagementAcceptanceTestRoleArn
+              - '")'
+              - '}'
+        MetricTransformations:
+          - MetricName: UnauthorisedS3Access
+            MetricNamespace: PublishedKeysS3Bucket
+            MetricValue: 1
+
+  PublishedKeysS3BucketAccessAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: PublishedKeysS3BucketAccessAlarm
+      MetricName: UnauthorisedS3Access
+      Namespace: PublishedKeysS3Bucket
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      # AlarmActions:
+      #   - !Ref AlarmTopic
+
 Outputs:
 
-  TableNameSession1:
-    Description: "DynamoDB Session Table Name"
-    Value: !Ref SessionTable1
-    Export:
-      Name: !Sub ${AWS::StackName}-TableNameSession1
+  # TableNameSession1:
+  #   Description: "DynamoDB Session Table Name"
+  #   Value: !Ref SessionTable1
+  #   Export:
+  #     Name: !Sub ${AWS::StackName}-TableNameSession1
 
-  CriVcSigningKey1Id:
-    Description: "CRI KMS Signing Key 1 Id"
-    Value: !Ref CriVcSigningKey1
-    Export:
-      Name: !Sub ${AWS::StackName}-CriVcSigningKey1Id
+  # CriVcSigningKey1Id:
+  #   Description: "CRI KMS Signing Key 1 Id"
+  #   Value: !Ref CriVcSigningKey1
+  #   Export:
+  #     Name: !Sub ${AWS::StackName}-CriVcSigningKey1Id
 
-  CriVcSigningKey1Arn:
-    Description: "CRI KMS Signing Key 1 Arn"
-    Value: !GetAtt CriVcSigningKey1.Arn
-    Export:
-      Name: !Sub ${AWS::StackName}-CriVcSigningKey1Arn
+  # CriVcSigningKey1Arn:
+  #   Description: "CRI KMS Signing Key 1 Arn"
+  #   Value: !GetAtt CriVcSigningKey1.Arn
+  #   Export:
+  #     Name: !Sub ${AWS::StackName}-CriVcSigningKey1Arn
 
-  CriDecryptionKey1Id:
-    Description: "CRI KMS Decryption Key 1 Id"
-    Value: !Ref CriDecryptionKey1
-    Export:
-      Name: !Sub ${AWS::StackName}-CriDecryptionKey1Id
+  # CriDecryptionKey1Id:
+  #   Description: "CRI KMS Decryption Key 1 Id"
+  #   Value: !Ref CriDecryptionKey1
+  #   Export:
+  #     Name: !Sub ${AWS::StackName}-CriDecryptionKey1Id
 
-  CriDecryptionKey1Arn:
-    Description: "CRI KMS Decryption Key 1 Arn"
-    Value: !GetAtt CriDecryptionKey1.Arn
-    Export:
-      Name: !Sub ${AWS::StackName}-CriDecryptionKey1Arn
+  # CriDecryptionKey1Arn:
+  #   Description: "CRI KMS Decryption Key 1 Arn"
+  #   Value: !GetAtt CriDecryptionKey1.Arn
+  #   Export:
+  #     Name: !Sub ${AWS::StackName}-CriDecryptionKey1Arn
 
-  ApiKey1:
-    Description: "API key 1 for API Gateway"
-    Value: !Ref ApiKey1
-    Export:
-      Name: !Sub ${AWS::StackName}-ApiKey1
+  # ApiKey1:
+  #   Description: "API key 1 for API Gateway"
+  #   Value: !Ref ApiKey1
+  #   Export:
+  #     Name: !Sub ${AWS::StackName}-ApiKey1
 
-  ApiKey2:
-    Description: "API key 2 for API Gateway"
-    Value: !Ref ApiKey2
-    Export:
-      Name: !Sub ${AWS::StackName}-ApiKey2
+  # ApiKey2:
+  #   Description: "API key 2 for API Gateway"
+  #   Value: !Ref ApiKey2
+  #   Export:
+  #     Name: !Sub ${AWS::StackName}-ApiKey2
 
   AlarmTopic:
     Description: "Alarm SNS Topic"
@@ -212,9 +346,9 @@ Outputs:
   PublishedKeysS3BucketName:
     Value: !Ref PublishedKeysS3Bucket
     Export:
-      Name: !Sub "PublishedKeysS3BucketName"
+      Name: !Sub ${AWS::StackName}-PublishedKeysS3BucketName
 
   PublishedKeysS3BucketArn:
     Value: !GetAtt PublishedKeysS3Bucket.Arn
     Export:
-      Name: !Sub "PublishedKeysS3BucketArn"
+      Name: !Sub ${AWS::StackName}-PublishedKeysS3BucketArn
