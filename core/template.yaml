@@ -3,16 +3,16 @@ Transform: "AWS::Serverless-2016-10-31"
 Description: "Digital Identity IPV CRI Core Infrastructure"
 
 Parameters:
-  Environment:
-    Type: String
-    Default: "none"
+  # Environment:
+  #   Type: String
+  #   Default: "none"
   PermissionsBoundary:
     Type: String
     Description: The ARN of the permissions boundary to apply to any role created by the template
     Default: "none"
-  ServiceName:
-    Type: String
-    Default: "none"
+  # ServiceName:
+  #   Type: String
+  #   Default: "none"
 
 Conditions:
   UsePermissionsBoundary:
@@ -150,7 +150,7 @@ Resources:
     Type: AWS::S3::Bucket
     # checkov:skip=CKV_AWS_18: "Ensure the S3 bucket has access logging enabled"
     Properties:
-      BucketName: !Sub "${ServiceName}-${Environment}-key-rotation-bucket"
+      # BucketName: !Sub "${ServiceName}-${Environment}-key-rotation-bucket"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -218,17 +218,17 @@ Resources:
             Resource: !Sub
               - arn:aws:s3:::${bucketName}/jwks.json
               - bucketName: !Ref PublishedKeysS3Bucket
-          - Sid: "Deny all access if not using SecureTransport"
-            Effect: Deny
-            Principal:
-              AWS: '*'
-            Action: '*'
-            Resource: !Sub
-              - arn:aws:s3:::${bucketName}/*
-              - bucketName: !Ref PublishedKeysS3Bucket
-            Condition:
-              Bool:
-                aws:SecureTransport: false
+          # - Sid: "Deny all access if not using SecureTransport"
+          #   Effect: Deny
+          #   Principal:
+          #     AWS: '*'
+          #   Action: '*'
+          #   Resource: !Sub
+          #     - arn:aws:s3:::${bucketName}/*
+          #     - bucketName: !Ref PublishedKeysS3Bucket
+          #   Condition:
+          #     Bool:
+          #       aws:SecureTransport: false
 
   PublishedKeysS3BucketLambdaRole:
     Type: AWS::IAM::Role
