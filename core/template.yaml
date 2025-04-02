@@ -3,16 +3,16 @@ Transform: "AWS::Serverless-2016-10-31"
 Description: "Digital Identity IPV CRI Core Infrastructure"
 
 Parameters:
-  Environment:
-    Type: String
-    Default: "none"
+  # Environment:
+  #   Type: String
+  #   Default: "none"
   PermissionsBoundary:
     Type: String
     Description: The ARN of the permissions boundary to apply to any role created by the template
     Default: "none"
-  ServiceName:
-    Type: String
-    Default: "none"
+  # ServiceName:
+  #   Type: String
+  #   Default: "none"
 
 Conditions:
   UsePermissionsBoundary:
@@ -150,7 +150,7 @@ Resources:
     Type: AWS::S3::Bucket
     # checkov:skip=CKV_AWS_18: "Ensure the S3 bucket has access logging enabled"
     Properties:
-      BucketName: !Sub "${ServiceName}-${Environment}-key-rotation-bucket"
+      # BucketName: !Sub "${ServiceName}-${Environment}-key-rotation-bucket"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -176,6 +176,18 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
+          - Sid: "Delegate IAM Access"
+            Action:
+              - 's3:*'
+            Effect: Allow
+            Resource:
+              - !GetAtt PublishedKeysS3Bucket.Arn
+              - !Sub
+                - "${Bucket}/*"
+                - Bucket: !GetAtt PublishedKeysS3Bucket.Arn
+            Principal:
+              AWS:
+                - !Sub "arn:aws:iam::${AWS::AccountId}:root"
           - Sid: "Allow APIGW and Lambda to list buckets"
             Effect: Allow
             Principal:
