@@ -6,12 +6,22 @@ Parameters:
   Environment:
     Type: String
     Default: "none"
+  PermissionsBoundary:
+    Type: String
+    Description: The ARN of the permissions boundary to apply to any role created by the template
+    Default: "none"
   ServiceName:
     Type: String
     Default: "none"
+
+Conditions:
+  UsePermissionsBoundary:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref PermissionsBoundary
+          - "none"
     
 Resources:
-
   CriVcSigningKey1:
     Type: AWS::KMS::Key
     Properties:
@@ -158,6 +168,93 @@ Resources:
       Tags:
         - Key: "Description"
           Value: "Published OAuth or DID keys bucket for key rotation state machine"
+
+  PublishedKeysS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref PublishedKeysS3Bucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "Allow APIGW and Lambda to list buckets"
+            Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+                - lambda.amazonaws.com
+            Action:
+              - s3:ListBucket
+              - s3:GetBucketLocation
+            Resource:
+              - !GetAtt PublishedKeysS3Bucket.Arn
+          - Sid: "Allow APIGW and Lambda to GetObject from keys bucket"
+            Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+                - lambda.amazonaws.com
+            Action:
+              - "s3:GetObject"
+            Resource: !Sub
+              - arn:aws:s3:::${bucketName}/jwks.json
+              - bucketName: !Ref PublishedKeysS3Bucket
+          - Sid: "Allow Lambda role to update keys bucket"
+            Effect: Allow
+            Principal:
+              AWS: !ImportValue OAuthGenerationFunctionRoleArn
+            Action:
+              - s3:Get*
+              - s3:Put*
+            Resource: !Sub
+              - arn:aws:s3:::${bucketName}/jwks.json
+              - bucketName: !Ref PublishedKeysS3Bucket
+          - Sid: "Allow Lambda role to update keys bucket"
+            Effect: Allow
+            Principal:
+              AWS: !ImportValue OAuthGenerationFunctionRoleArn
+            Action:
+              - s3:Get*
+              - s3:Put*
+            Resource: !Sub
+              - arn:aws:s3:::${bucketName}/jwks.json
+              - bucketName: !Ref PublishedKeysS3Bucket
+          - Sid: "Deny all access if not using SecureTransport"
+            Effect: Deny
+            Principal:
+              AWS: '*'
+            Action: '*'
+            Resource: !Sub
+              - arn:aws:s3:::${bucketName}/*
+              - bucketName: !Ref PublishedKeysS3Bucket
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+  PublishedKeysS3BucketLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              AWS: !ImportValue OAuthGenerationFunctionRoleArn
+        Version: "2012-10-17"
+      Policies:
+        - PolicyName: PublishedKeysS3BucketPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:Get*
+                  - s3:Put*
+                Resource:
+                  - !Sub ${PublishedKeysS3Bucket.Arn}/jwks.json
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
 
 Outputs:
 
