@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-      - IPS-1529-bucket-perms
+      # - IPS-1529-bucket-perms
     # paths:
     #   - "core/**"
   workflow_dispatch: # deploy manually

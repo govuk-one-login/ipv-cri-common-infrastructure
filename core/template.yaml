@@ -3,16 +3,16 @@ Transform: "AWS::Serverless-2016-10-31"
 Description: "Digital Identity IPV CRI Core Infrastructure"
 
 Parameters:
-  # Environment:
-  #   Type: String
-  #   Default: "none"
+  Environment:
+    Type: String
+    Default: "none"
   PermissionsBoundary:
     Type: String
     Description: The ARN of the permissions boundary to apply to any role created by the template
     Default: "none"
-  # ServiceName:
-  #   Type: String
-  #   Default: "none"
+  ServiceName:
+    Type: String
+    Default: "none"
 
 Conditions:
   UsePermissionsBoundary:
@@ -150,7 +150,7 @@ Resources:
     Type: AWS::S3::Bucket
     # checkov:skip=CKV_AWS_18: "Ensure the S3 bucket has access logging enabled"
     Properties:
-      # BucketName: !Sub "${ServiceName}-${Environment}-key-rotation-bucket"
+      BucketName: !Sub "${ServiceName}-${Environment}-key-rotation-bucket"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -188,7 +188,21 @@ Resources:
             Principal:
               AWS:
                 - !Sub "arn:aws:iam::${AWS::AccountId}:root"
-          - Sid: "Allow APIGW and Lambda to list buckets"
+          - Sid: "Bucket permissions: key_consumer_type is manage"
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - s3:Get*
+              - s3:Put*
+            Resource: !Sub
+              - arn:aws:s3:::${bucketName}/jwks.json
+              - bucketName: !Ref PublishedKeysS3Bucket
+            Condition:
+              StringEquals:
+                  "aws:ResourceTag/key_consumer_type": "manage"
+          - Sid: "Bucket permissions: key_consumer_type is use"
             Effect: Allow
             Principal:
               Service:
@@ -199,7 +213,12 @@ Resources:
               - s3:GetBucketLocation
             Resource:
               - !GetAtt PublishedKeysS3Bucket.Arn
-          - Sid: "Allow APIGW and Lambda to GetObject from keys bucket"
+            Condition:
+              StringEquals:
+                  "aws:ResourceTag/key_consumer_type":
+                    - "manage"
+                    - "use"
+          - Sid: "Object permissions: key_consumer_type is use"
             Effect: Allow
             Principal:
               Service:
@@ -209,27 +228,12 @@ Resources:
               - "s3:GetObject"
             Resource: !Sub
               - arn:aws:s3:::${bucketName}/jwks.json
-              - bucketName: !Ref PublishedKeysS3Bucket
-          - Sid: "Allow Lambda role to update keys bucket"
-            Effect: Allow
-            Principal:
-              AWS: !ImportValue OAuthGenerationFunctionRoleArn
-            Action:
-              - s3:Get*
-              - s3:Put*
-            Resource: !Sub
-              - arn:aws:s3:::${bucketName}/jwks.json
-              - bucketName: !Ref PublishedKeysS3Bucket
-          - Sid: "Allow Lambda role to update keys bucket"
-            Effect: Allow
-            Principal:
-              AWS: !ImportValue OAuthGenerationFunctionRoleArn
-            Action:
-              - s3:Get*
-              - s3:Put*
-            Resource: !Sub
-              - arn:aws:s3:::${bucketName}/jwks.json
-              - bucketName: !Ref PublishedKeysS3Bucket
+              - bucketName: !Ref PublishedKeysS3Bucket  
+            Condition:
+              StringEquals:
+                  "aws:ResourceTag/key_consumer_type":
+                    - "manage"
+                    - "use"         
           - Sid: "Deny all access if not using SecureTransport"
             Effect: Deny
             Principal:
