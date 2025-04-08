@@ -188,21 +188,7 @@ Resources:
             Principal:
               AWS:
                 - !Sub "arn:aws:iam::${AWS::AccountId}:root"
-          - Sid: "Bucket permissions: key_consumer_type is manage"
-            Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - s3:Get*
-              - s3:Put*
-            Resource: !Sub
-              - arn:aws:s3:::${bucketName}/jwks.json
-              - bucketName: !Ref PublishedKeysS3Bucket
-            Condition:
-              StringEquals:
-                  "aws:ResourceTag/key_consumer_type": "manage"
-          - Sid: "Bucket permissions: key_consumer_type is use"
+          - Sid: "Bucket permissions"
             Effect: Allow
             Principal:
               Service:
@@ -218,7 +204,7 @@ Resources:
                   "aws:ResourceTag/key_consumer_type":
                     - "manage"
                     - "use"
-          - Sid: "Object permissions: key_consumer_type is use"
+          - Sid: "Object permissions"
             Effect: Allow
             Principal:
               Service:
@@ -254,7 +240,11 @@ Resources:
           - Action: sts:AssumeRole
             Effect: Allow
             Principal:
-              AWS: !ImportValue OAuthGenerationFunctionRoleArn
+              AWS: "*"
+            Condition:
+              StringEquals:
+                  "aws:ResourceTag/key_consumer_type": "manage"
+                  "aws:ResourceAccount": !Sub ${AWS::AccountId}
         Version: "2012-10-17"
       Policies:
         - PolicyName: PublishedKeysS3BucketPolicy
