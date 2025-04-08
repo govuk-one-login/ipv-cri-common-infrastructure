@@ -182,13 +182,11 @@ Resources:
             Effect: Allow
             Resource:
               - !GetAtt PublishedKeysS3Bucket.Arn
-              - !Sub
-                - "${Bucket}/*"
-                - Bucket: !GetAtt PublishedKeysS3Bucket.Arn
+              - !Sub ${PublishedKeysS3Bucket.Arn}/*
             Principal:
               AWS:
                 - !Sub "arn:aws:iam::${AWS::AccountId}:root"
-          - Sid: "Bucket permissions: key_consumer_type is use"
+          - Sid: "Bucket permissions"
             Effect: Allow
             Principal:
               Service:
@@ -204,7 +202,7 @@ Resources:
                   "aws:ResourceTag/key_consumer_type":
                     - "manage"
                     - "use"
-          - Sid: "Object permissions: key_consumer_type is use"
+          - Sid: "Object permissions"
             Effect: Allow
             Principal:
               Service:
@@ -212,9 +210,8 @@ Resources:
                 - lambda.amazonaws.com
             Action:
               - "s3:GetObject"
-            Resource: !Sub
-              - arn:aws:s3:::${bucketName}/jwks.json
-              - bucketName: !Ref PublishedKeysS3Bucket  
+            Resource:
+              - !Sub ${PublishedKeysS3Bucket.Arn}/*
             Condition:
               StringEquals:
                   "aws:ResourceTag/key_consumer_type":
@@ -225,9 +222,8 @@ Resources:
             Principal:
               AWS: '*'
             Action: '*'
-            Resource: !Sub
-              - arn:aws:s3:::${bucketName}/*
-              - bucketName: !Ref PublishedKeysS3Bucket
+            Resource:
+              - !Sub ${PublishedKeysS3Bucket.Arn}/*
             Condition:
               Bool:
                 aws:SecureTransport: false
@@ -256,7 +252,7 @@ Resources:
                   - s3:Get*
                   - s3:Put*
                 Resource:
-                  - !Sub ${PublishedKeysS3Bucket.Arn}/jwks.json
+                  - !Sub ${PublishedKeysS3Bucket.Arn}/*
       PermissionsBoundary: !If
         - UsePermissionsBoundary
         - !Ref PermissionsBoundary
