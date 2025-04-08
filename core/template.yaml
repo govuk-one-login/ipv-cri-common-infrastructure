@@ -240,7 +240,8 @@ Resources:
           - Action: sts:AssumeRole
             Effect: Allow
             Principal:
-              AWS: "*"
+              Service:
+                - lambda.amazonaws.com
             Condition:
               StringEquals:
                   "aws:ResourceTag/key_consumer_type": "manage"
