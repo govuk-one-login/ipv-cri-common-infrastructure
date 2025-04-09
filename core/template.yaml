@@ -231,6 +231,7 @@ Resources:
   PublishedKeysS3BucketLambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      PermissionsBoundary: !If [ UsePermissionsBoundary, !Ref PermissionsBoundary, !Ref AWS::NoValue ]
       AssumeRolePolicyDocument:
         Statement:
           - Action: sts:AssumeRole
@@ -243,21 +244,21 @@ Resources:
                   "aws:ResourceTag/key_consumer_type": "manage"
                   "aws:ResourceAccount": !Sub ${AWS::AccountId}
         Version: "2012-10-17"
-      Policies:
-        - PolicyName: PublishedKeysS3BucketPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:Get*
-                  - s3:Put*
-                Resource:
-                  - !Sub ${PublishedKeysS3Bucket.Arn}/*
-      PermissionsBoundary: !If
-        - UsePermissionsBoundary
-        - !Ref PermissionsBoundary
-        - !Ref AWS::NoValue
+
+  PublishedKeysS3BucketLambdaRolePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:Get*
+              - s3:Put*
+            Resource:
+              - !Sub ${PublishedKeysS3Bucket.Arn}/*
+      Roles:
+        - !Ref PublishedKeysS3BucketLambdaRole
 
 Outputs:
 
