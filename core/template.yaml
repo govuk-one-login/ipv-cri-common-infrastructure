@@ -276,7 +276,7 @@ Resources:
                   "aws:ResourceAccount": !Sub ${AWS::AccountId}
         Version: "2012-10-17"
       Policies:
-        - PolicyName: PublishedKeysS3BucketPolicy
+        - PolicyName: !Sub "PublishedKeysS3BucketLambdaRole-${Environment}"
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
