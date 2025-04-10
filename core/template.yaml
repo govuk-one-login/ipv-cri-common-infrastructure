@@ -334,6 +334,7 @@ Resources:
     DependsOn:
       - PublishedKeysLogsBucketPolicy
     Type: AWS::CloudTrail::Trail
+    Condition: IsNotDev
     Properties:
       TrailName: !Sub "${Environment}-${AWS::StackName}-cloudtrail"
       IncludeGlobalServiceEvents: true
@@ -356,6 +357,7 @@ Resources:
 
   TrailLogGroupRole:
     Type: AWS::IAM::Role
+    Condition: IsNotDev
     Properties:
       PermissionsBoundary: !If [ UsePermissionsBoundary, !Ref PermissionsBoundary, !Ref AWS::NoValue ]
       AssumeRolePolicyDocument:
@@ -379,6 +381,7 @@ Resources:
 
   PublishedKeysS3BucketObjectActionsMetricFilter:
       Type: AWS::Logs::MetricFilter
+      Condition: IsNotDev
       Properties:
         LogGroupName: !Ref PublishedKeysS3BucketLogGroup
         FilterPattern:
