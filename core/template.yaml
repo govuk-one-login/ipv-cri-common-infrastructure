@@ -231,7 +231,6 @@ Resources:
   PublishedKeysS3BucketLambdaRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "PublishedKeysS3BucketLambdaRole-${Environment}"
       AssumeRolePolicyDocument:
         Statement:
           - Action: sts:AssumeRole
@@ -242,6 +241,7 @@ Resources:
             Condition:
               StringEquals:
                   "aws:ResourceTag/key_consumer_type": "manage"
+                  "aws:ResourceTag/key_consumer_test": "test"
                   "aws:ResourceAccount": !Sub ${AWS::AccountId}
         Version: "2012-10-17"
       Policies:
