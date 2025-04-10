@@ -231,6 +231,7 @@ Resources:
   PublishedKeysS3BucketLambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Sub "PublishedKeysS3BucketLambdaRole-${Environment}"
       AssumeRolePolicyDocument:
         Statement:
           - Action: sts:AssumeRole
