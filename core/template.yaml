@@ -241,7 +241,38 @@ Resources:
             Condition:
               StringEquals:
                   "aws:ResourceTag/key_consumer_type": "manage"
-                  "aws:ResourceTag/key_consumer_test": "test"
+                  "aws:ResourceAccount": !Sub ${AWS::AccountId}
+        Version: "2012-10-17"
+      Policies:
+        - PolicyName: PublishedKeysS3BucketPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:Get*
+                  - s3:Put*
+                Resource:
+                  - !Sub ${PublishedKeysS3Bucket.Arn}/*
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
+
+  PublishedKeysS3BucketLambdaRole2:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "PublishedKeysS3BucketLambdaRole-${Environment}"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Condition:
+              StringEquals:
+                  "aws:ResourceTag/key_consumer_type": "manage"
                   "aws:ResourceAccount": !Sub ${AWS::AccountId}
         Version: "2012-10-17"
       Policies:
