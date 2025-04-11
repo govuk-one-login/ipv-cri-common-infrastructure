@@ -231,6 +231,7 @@ Resources:
   PublishedKeysS3BucketLambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Sub "${AWS::StackName}-PublishedKeysS3BucketLambdaRole-${Environment}"
       AssumeRolePolicyDocument:
         Statement:
           - Action: sts:AssumeRole
@@ -241,6 +242,7 @@ Resources:
             Condition:
               StringEquals:
                   "aws:ResourceTag/key_consumer_type": "manage"
+                  "aws:ResourceTag/key_consumer_test": "test"
                   "aws:ResourceAccount": !Sub ${AWS::AccountId}
         Version: "2012-10-17"
       Policies:
@@ -318,3 +320,8 @@ Outputs:
     Value: !GetAtt PublishedKeysS3Bucket.Arn
     Export:
       Name: !Sub ${AWS::StackName}-PublishedKeysS3BucketArn
+
+  PublishedKeysS3BucketLambdaRole:
+    Value: !GetAtt PublishedKeysS3BucketLambdaRole.Arn
+    Export:
+      Name: !Sub PublishedKeysS3BucketLambdaRole-${Environment}
