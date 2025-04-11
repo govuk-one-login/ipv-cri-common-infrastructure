@@ -270,6 +270,7 @@ Resources:
 
   PublishedKeysS3BucketLogGroup:
     Type: AWS::Logs::LogGroup
+    Condition: IsNotDev   
     Properties:
       LogGroupName: !Join
         - "-"
@@ -279,6 +280,7 @@ Resources:
 
   PublishedKeysLogsBucket:
     Type: AWS::S3::Bucket
+    Condition: IsNotDev   
     Properties:
       BucketName: !Join
         - "-"
@@ -298,6 +300,7 @@ Resources:
 
   PublishedKeysLogsBucketPolicy:
     Type: 'AWS::S3::BucketPolicy'
+    Condition: IsNotDev
     Properties:
       Bucket: !Ref PublishedKeysLogsBucket
       PolicyDocument:
@@ -330,6 +333,7 @@ Resources:
     DependsOn:
       - PublishedKeysLogsBucketPolicy
     Type: AWS::CloudTrail::Trail
+    Condition: IsNotDev   
     Properties:
       TrailName: !Sub "${Environment}-${AWS::StackName}-cloudtrail"
       IncludeGlobalServiceEvents: true
@@ -352,6 +356,7 @@ Resources:
 
   TrailLogGroupRole:
     Type: AWS::IAM::Role
+    Condition: IsNotDev   
     Properties:
       PermissionsBoundary: !If [ UsePermissionsBoundary, !Ref PermissionsBoundary, !Ref AWS::NoValue ]
       AssumeRolePolicyDocument:
@@ -375,6 +380,7 @@ Resources:
 
   PublishedKeysS3BucketObjectActionsMetricFilter:
       Type: AWS::Logs::MetricFilter
+      Condition: IsNotDev      
       Properties:
         LogGroupName: !Ref PublishedKeysS3BucketLogGroup
         FilterPattern:
