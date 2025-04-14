@@ -6,6 +6,13 @@ Parameters:
   Environment:
     Type: String
     Default: "none"
+  Mode: 
+    Type: String
+    Description: S3 Object Lock retention mode. In compliance mode, a protected object version can't be overwritten or deleted by any user, including the root user. In governance mode, users can't overwrite or delete an object version or alter its lock settings unless they have special permissions.
+    AllowedValues:
+         - GOVERNANCE
+         - COMPLIANCE
+    Default: GOVERNANCE
   ServiceName:
     Type: String
     Default: "none"
@@ -149,6 +156,13 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
+      ObjectLockEnabled: true
+      ObjectLockConfiguration:
+        ObjectLockEnabled: Enabled
+        Rule:
+          DefaultRetention:
+            Mode: !Ref Mode
+            Days: 1
       VersioningConfiguration:
         Status: Enabled
       NotificationConfiguration:
