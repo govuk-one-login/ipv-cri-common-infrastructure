@@ -193,7 +193,7 @@ Resources:
                   "aws:PrincipalTag/key_consumer_type":
                     - "use"
                     - "manage"
-          - Sid: "3. Deny Read permissions if tag is missing, or not equal to use/manage"
+          - Sid: "3. Deny Read permissions if tag is missing, or not equal to use/manage (except for admin role)"
             Effect: Deny
             Principal:
               AWS: "*"
@@ -209,6 +209,8 @@ Resources:
                 "aws:PrincipalTag/key_consumer_type":
                   - "manage"
                   - "use"
+              StringNotLike:
+                 "aws:PrincipalArn": !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_AWSAdministratorAccess*"
           - Sid: "4. Allow Write permission for manage tag only"
             Effect: Allow
             Principal:
