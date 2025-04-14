@@ -6,21 +6,10 @@ Parameters:
   Environment:
     Type: String
     Default: "none"
-  PermissionsBoundary:
-    Type: String
-    Description: The ARN of the permissions boundary to apply to any role created by the template
-    Default: "none"
   ServiceName:
     Type: String
     Default: "none"
 
-Conditions:
-  UsePermissionsBoundary:
-    Fn::Not:
-      - Fn::Equals:
-          - !Ref PermissionsBoundary
-          - "none"
-    
 Resources:
   CriVcSigningKey1:
     Type: AWS::KMS::Key
@@ -176,9 +165,9 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Sid: "Delegate IAM Access"
+          - Sid: "1. Delegate IAM Access"
             Action:
-              - 's3:*'
+              - "s3:*"
             Effect: Allow
             Resource:
               - !GetAtt PublishedKeysS3Bucket.Arn
@@ -186,7 +175,7 @@ Resources:
             Principal:
               AWS:
                 - !Sub "arn:aws:iam::${AWS::AccountId}:root"
-          - Sid: "Bucket permissions"
+          - Sid: "2. Allow Read permissions"
             Effect: Allow
             Principal:
               Service:
@@ -195,69 +184,65 @@ Resources:
             Action:
               - s3:ListBucket
               - s3:GetBucketLocation
+              - s3:GetObject
             Resource:
               - !GetAtt PublishedKeysS3Bucket.Arn
+              - !Sub ${PublishedKeysS3Bucket.Arn}/*
             Condition:
               StringEquals:
-                  "aws:ResourceTag/key_consumer_type":
-                    - "manage"
+                  "aws:PrincipalTag/key_consumer_type":
                     - "use"
-          - Sid: "Object permissions"
+                    - "manage"
+          - Sid: "3. Deny Read permissions if tag is missing, or not equal to use/manage"
+            Effect: Deny
+            Principal:
+              AWS: "*"
+            Action:
+              - s3:ListBucket
+              - s3:GetBucketLocation
+              - s3:GetObject
+            Resource:
+              - !GetAtt PublishedKeysS3Bucket.Arn
+              - !Sub ${PublishedKeysS3Bucket.Arn}/*
+            Condition:
+              StringNotEqualsIfExists:
+                "aws:PrincipalTag/key_consumer_type":
+                  - "manage"
+                  - "use"
+          - Sid: "4. Allow Write permission for manage tag only"
             Effect: Allow
             Principal:
               Service:
                 - apigateway.amazonaws.com
                 - lambda.amazonaws.com
             Action:
-              - "s3:GetObject"
+              - "s3:Put*"
             Resource:
               - !Sub ${PublishedKeysS3Bucket.Arn}/*
             Condition:
               StringEquals:
-                  "aws:ResourceTag/key_consumer_type":
-                    - "manage"
-                    - "use"         
-          - Sid: "Deny all access if not using SecureTransport"
+                  "aws:PrincipalTag/key_consumer_type": "manage"
+          - Sid: "5. Deny Write permission if tag is missing, or not equal to manage"
             Effect: Deny
             Principal:
-              AWS: '*'
-            Action: '*'
+              AWS: "*"
+            Action:
+              - "s3:Put*"
+            Resource:
+              - !Sub ${PublishedKeysS3Bucket.Arn}/*
+            Condition:
+              StringNotEqualsIfExists:
+                "aws:PrincipalTag/key_consumer_type": "manage"
+          - Sid: "6. Deny all access if not using SecureTransport"
+            Effect: Deny
+            Principal:
+              AWS: "*"
+            Action: "*"
             Resource:
               - !Sub ${PublishedKeysS3Bucket.Arn}/*
             Condition:
               Bool:
                 aws:SecureTransport: false
-
-  PublishedKeysS3BucketLambdaRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action: sts:AssumeRole
-            Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Condition:
-              StringEquals:
-                  "aws:ResourceTag/key_consumer_type": "manage"
-                  "aws:ResourceAccount": !Sub ${AWS::AccountId}
-        Version: "2012-10-17"
-      Policies:
-        - PolicyName: PublishedKeysS3BucketPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:Get*
-                  - s3:Put*
-                Resource:
-                  - !Sub ${PublishedKeysS3Bucket.Arn}/*
-      PermissionsBoundary: !If
-        - UsePermissionsBoundary
-        - !Ref PermissionsBoundary
-        - !Ref AWS::NoValue
 
 Outputs:
 
