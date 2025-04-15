@@ -403,8 +403,36 @@ Resources:
     Condition: IsNotDev
     Properties:
       AlarmName: PublishedKeysS3BucketObjectActionAlarm
-      AlarmDescription: A role other than the `OAuthGenerationFunctionRole` has attempted to `PutObject` or `DeleteObject`
+      AlarmDescription: !Sub "A role other than the `OAuthGenerationFunctionRole` has attempted to `PutObject` or `DeleteObject` to `${PublishedKeysS3Bucket.Arn}`. Check Cloudwatch for further details."
       MetricName: UnauthorisedS3ObjectAction
+      Namespace: PublishedKeysBucket
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - Fn::ImportValue: !Sub "${BuildNotificationStackName}-BuildNotificationTopicArn"
+
+  PublishedKeysBucketConfigChangeMetricFilter:
+    Type: 'AWS::Logs::MetricFilter'
+    Condition: IsNotDev
+    Properties:
+      LogGroupName: !Ref PublishedKeysS3BucketLogGroup
+      FilterPattern: '{ ($.eventSource = s3.amazonaws.com) && (($.eventName = PutBucketAcl) || ($.eventName = PutBucketPolicy) || ($.eventName = PutBucketCors) || ($.eventName = PutBucketLifecycle) || ($.eventName = PutBucketReplication) || ($.eventName = DeleteBucketPolicy) || ($.eventName = DeleteBucketCors) || ($.eventName = DeleteBucketLifecycle) || ($.eventName = DeleteBucketReplication)) }'
+      MetricTransformations:
+        - MetricName: PublishedKeysBucketConfigChange
+          MetricNamespace: PublishedKeysBucket
+          MetricValue: 1
+
+  PublishedKeysBucketConfigChangeAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: IsNotDev
+    Properties:
+      AlarmName: PublishedKeysBucketConfigChangeAlarm
+      AlarmDescription: !Sub "Changes have been made to `${PublishedKeysS3Bucket.Arn}`, for example, a `DeleteBucketPolicy`, `DeleteBucketLifecycle` or `PutBucketCors` event. Check Cloudwatch for further details."
+      MetricName: PublishedKeysBucketConfigChange
       Namespace: PublishedKeysBucket
       Statistic: Sum
       Period: 60
