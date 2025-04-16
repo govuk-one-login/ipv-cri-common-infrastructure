@@ -228,11 +228,15 @@ Resources:
               AWS: "*"
             Action:
               - "s3:Put*"
+              - "s3:Delete*"
             Resource:
+              - !Sub ${PublishedKeysS3Bucket.Arn}
               - !Sub ${PublishedKeysS3Bucket.Arn}/*
             Condition:
               StringNotEqualsIfExists:
                 "aws:PrincipalTag/key_consumer_type": "manage"
+              StringNotLike:
+                 "aws:PrincipalArn": !Sub "arn:aws:iam::${AWS::AccountId}:role/PL-key-rotation-pipeline-DeployRole*"
           - Sid: "6. Deny all access if not using SecureTransport"
             Effect: Deny
             Principal:
