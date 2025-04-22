@@ -3,13 +3,37 @@ Transform: "AWS::Serverless-2016-10-31"
 Description: "Digital Identity IPV CRI Core Infrastructure"
 
 Parameters:
+  BuildNotificationStackName:
+    Description: The topic to send key rotation bucket access notifications to
+    Type: String
+    Default: "none"
   Environment:
     Type: String
+    Default: "none"
+  PermissionsBoundary:
+    Type: String
+    Description: The ARN of the permissions boundary to apply to any role created by the template
     Default: "none"
   ServiceName:
     Type: String
     Default: "none"
 
+Conditions:
+  IsDev:
+    Fn::Equals:
+      - !Ref Environment
+      - "dev"
+
+  IsNotDev:
+    Fn::Not:
+      - !Condition IsDev
+
+  UsePermissionsBoundary:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref PermissionsBoundary
+          - "none"
+    
 Resources:
   CriVcSigningKey1:
     Type: AWS::KMS::Key
@@ -243,6 +267,181 @@ Resources:
             Condition:
               Bool:
                 aws:SecureTransport: false
+
+  PublishedKeysS3BucketLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: IsNotDev   
+    Properties:
+      LogGroupName: !Join
+        - "-"
+        - - !Ref PublishedKeysS3Bucket
+          - "logs"
+      RetentionInDays: 30
+
+  PublishedKeysLogsBucket:
+    Type: AWS::S3::Bucket
+    Condition: IsNotDev   
+    Properties:
+      BucketName: !Join
+        - "-"
+        - - !Ref PublishedKeysS3Bucket
+          - "logs"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+
+  PublishedKeysLogsBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Condition: IsNotDev
+    Properties:
+      Bucket: !Ref PublishedKeysLogsBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "s3:GetBucketAcl"
+            Principal:
+              Service: "cloudtrail.amazonaws.com"
+            Resource: !Sub "arn:aws:s3:::${PublishedKeysLogsBucket}"
+          - Effect: Allow
+            Action: "s3:PutObject"
+            Principal:
+              Service: "cloudtrail.amazonaws.com"
+            Resource: !Sub "arn:aws:s3:::${PublishedKeysLogsBucket}/AWSLogs/${AWS::AccountId}/*"
+            Condition:
+              StringEquals:
+                "s3:x-amz-acl": "bucket-owner-full-control"
+          - Effect: Deny
+            Action: "s3:*"
+            Principal: "*"
+            Resource:
+              - !GetAtt PublishedKeysLogsBucket.Arn
+              - !Sub "${PublishedKeysLogsBucket.Arn}/*"
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
+          
+  Trail:
+    DependsOn:
+      - PublishedKeysLogsBucketPolicy
+    Type: AWS::CloudTrail::Trail
+    Condition: IsNotDev   
+    Properties:
+      TrailName: !Sub "${Environment}-${AWS::StackName}-cloudtrail"
+      IncludeGlobalServiceEvents: true
+      IsLogging: true
+      IsMultiRegionTrail: false
+      EventSelectors:
+        - DataResources:
+            - Type: AWS::S3::Object
+              Values:
+                - !Join
+                  - ""
+                  - - !GetAtt PublishedKeysS3Bucket.Arn
+                    - "/"
+          IncludeManagementEvents: true
+          ReadWriteType: All
+      S3BucketName: !Ref PublishedKeysLogsBucket
+      EnableLogFileValidation: true
+      CloudWatchLogsLogGroupArn: !GetAtt PublishedKeysS3BucketLogGroup.Arn
+      CloudWatchLogsRoleArn: !GetAtt TrailLogGroupRole.Arn
+
+  TrailLogGroupRole:
+    Type: AWS::IAM::Role
+    Condition: IsNotDev   
+    Properties:
+      PermissionsBoundary: !If [ UsePermissionsBoundary, !Ref PermissionsBoundary, !Ref AWS::NoValue ]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "sts:AssumeRole"
+            Principal:
+              Service:
+                - "cloudtrail.amazonaws.com"
+      Policies:
+        - PolicyName: !Sub "${AWS::StackName}-PublishedKeysS3BucketCloudtrailLogGroupRole"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: !GetAtt PublishedKeysS3BucketLogGroup.Arn
+
+  PublishedKeysS3BucketObjectActionsMetricFilter:
+      Type: AWS::Logs::MetricFilter
+      Condition: IsNotDev      
+      Properties:
+        LogGroupName: !Ref PublishedKeysS3BucketLogGroup
+        FilterPattern:
+          Fn::Join:
+            - ""
+            - - '{'
+              - '($.eventSource = s3.amazonaws.com) &&'
+              - '($.eventName = DeleteObject || $.eventName = PutObject) &&'
+              - '($.userIdentity.arn != "'
+              - !ImportValue OAuthGenerationFunctionRoleArn
+              - '")'
+              - '}'
+        MetricTransformations:
+          - MetricName: UnauthorisedS3ObjectAction
+            MetricNamespace: PublishedKeysBucket
+            MetricValue: 1
+
+  PublishedKeysS3BucketObjectActionAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: IsNotDev
+    Properties:
+      AlarmName: PublishedKeysS3BucketObjectActionAlarm
+      AlarmDescription: !Sub "A role other than the `OAuthGenerationFunctionRole` has attempted to `PutObject` or `DeleteObject` to `${PublishedKeysS3Bucket.Arn}`. Check Cloudwatch for further details."
+      MetricName: UnauthorisedS3ObjectAction
+      Namespace: PublishedKeysBucket
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - Fn::ImportValue: !Sub "${BuildNotificationStackName}-BuildNotificationTopicArn"
+
+  PublishedKeysBucketConfigChangeMetricFilter:
+    Type: 'AWS::Logs::MetricFilter'
+    Condition: IsNotDev
+    Properties:
+      LogGroupName: !Ref PublishedKeysS3BucketLogGroup
+      FilterPattern: '{ ($.eventSource = s3.amazonaws.com) && (($.eventName = PutBucketAcl) || ($.eventName = PutBucketPolicy) || ($.eventName = PutBucketCors) || ($.eventName = PutBucketLifecycle) || ($.eventName = PutBucketReplication) || ($.eventName = DeleteBucketPolicy) || ($.eventName = DeleteBucketCors) || ($.eventName = DeleteBucketLifecycle) || ($.eventName = DeleteBucketReplication)) }'
+      MetricTransformations:
+        - MetricName: PublishedKeysBucketConfigChange
+          MetricNamespace: PublishedKeysBucket
+          MetricValue: 1
+
+  PublishedKeysBucketConfigChangeAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: IsNotDev
+    Properties:
+      AlarmName: PublishedKeysBucketConfigChangeAlarm
+      AlarmDescription: !Sub "Changes have been made to `${PublishedKeysS3Bucket.Arn}`, for example, a `DeleteBucketPolicy`, `DeleteBucketLifecycle` or `PutBucketCors` event. Check Cloudwatch for further details."
+      MetricName: PublishedKeysBucketConfigChange
+      Namespace: PublishedKeysBucket
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - Fn::ImportValue: !Sub "${BuildNotificationStackName}-BuildNotificationTopicArn"
 
 Outputs:
 
