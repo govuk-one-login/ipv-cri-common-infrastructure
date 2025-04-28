@@ -139,7 +139,7 @@ Resources:
     Type: AWS::S3::Bucket
     # checkov:skip=CKV_AWS_18: "Ensure the S3 bucket has access logging enabled"
     Properties:
-      BucketName: !Sub "${ServiceName}-${Environment}-key-rotation-bucket"
+      BucketName: !Sub "govuk-one-login-${ServiceName}-published-keys-${Environment}"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
