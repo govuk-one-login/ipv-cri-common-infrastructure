@@ -245,36 +245,11 @@ Resources:
                 aws:SecureTransport: false
 
 Outputs:
-
-  TableNameSession1:
-    Description: "DynamoDB Session Table Name"
-    Value: !Ref SessionTable1
+  AlarmTopic:
+    Description: "Alarm SNS Topic"
+    Value: !Ref AlarmTopic
     Export:
-      Name: !Sub ${AWS::StackName}-TableNameSession1
-
-  CriVcSigningKey1Id:
-    Description: "CRI KMS Signing Key 1 Id"
-    Value: !Ref CriVcSigningKey1
-    Export:
-      Name: !Sub ${AWS::StackName}-CriVcSigningKey1Id
-
-  CriVcSigningKey1Arn:
-    Description: "CRI KMS Signing Key 1 Arn"
-    Value: !GetAtt CriVcSigningKey1.Arn
-    Export:
-      Name: !Sub ${AWS::StackName}-CriVcSigningKey1Arn
-
-  CriDecryptionKey1Id:
-    Description: "CRI KMS Decryption Key 1 Id"
-    Value: !Ref CriDecryptionKey1
-    Export:
-      Name: !Sub ${AWS::StackName}-CriDecryptionKey1Id
-
-  CriDecryptionKey1Arn:
-    Description: "CRI KMS Decryption Key 1 Arn"
-    Value: !GetAtt CriDecryptionKey1.Arn
-    Export:
-      Name: !Sub ${AWS::StackName}-CriDecryptionKey1Arn
+      Name: !Sub ${AWS::StackName}-AlarmTopic
 
   ApiKey1:
     Description: "API key 1 for API Gateway"
@@ -288,18 +263,42 @@ Outputs:
     Export:
       Name: !Sub ${AWS::StackName}-ApiKey2
 
-  AlarmTopic:
-    Description: "Alarm SNS Topic"
-    Value: !Ref AlarmTopic
+  CriDecryptionKey1Arn:
+    Description: "CRI KMS Decryption Key 1 Arn"
+    Value: !GetAtt CriDecryptionKey1.Arn
     Export:
-      Name: !Sub ${AWS::StackName}-AlarmTopic
+      Name: !Sub ${AWS::StackName}-CriDecryptionKey1Arn
 
-  PublishedKeysS3BucketName:
-    Value: !Ref PublishedKeysS3Bucket
+  CriDecryptionKey1Id:
+    Description: "CRI KMS Decryption Key 1 Id"
+    Value: !Ref CriDecryptionKey1
     Export:
-      Name: !Sub ${AWS::StackName}-PublishedKeysS3BucketName
+      Name: !Sub ${AWS::StackName}-CriDecryptionKey1Id
+
+  CriVcSigningKey1Arn:
+    Description: "CRI KMS Signing Key 1 Arn"
+    Value: !GetAtt CriVcSigningKey1.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-CriVcSigningKey1Arn
+
+  CriVcSigningKey1Id:
+    Description: "CRI KMS Signing Key 1 Id"
+    Value: !Ref CriVcSigningKey1
+    Export:
+      Name: !Sub ${AWS::StackName}-CriVcSigningKey1Id
 
   PublishedKeysS3BucketArn:
     Value: !GetAtt PublishedKeysS3Bucket.Arn
     Export:
       Name: !Sub ${AWS::StackName}-PublishedKeysS3BucketArn
+  
+  PublishedKeysS3BucketName:
+    Value: !Ref PublishedKeysS3Bucket
+    Export:
+      Name: !Sub ${AWS::StackName}-PublishedKeysS3BucketName
+
+  TableNameSession1:
+    Description: "DynamoDB Session Table Name"
+    Value: !Ref SessionTable1
+    Export:
+      Name: !Sub ${AWS::StackName}-TableNameSession1
