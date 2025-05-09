@@ -50,6 +50,7 @@ jobs:
 
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment: development
     env:
       AWS_REGION: eu-west-2
     permissions:
@@ -138,6 +139,7 @@ jobs:
 
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment: build
     env:
       AWS_REGION: eu-west-2
     permissions:
