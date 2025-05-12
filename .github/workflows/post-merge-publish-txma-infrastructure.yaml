@@ -50,7 +50,7 @@ jobs:
 
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    environment: development
+    environment: ${{ matrix.target }}
     env:
       AWS_REGION: eu-west-2
     permissions:
@@ -139,7 +139,7 @@ jobs:
 
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    environment: build
+    environment: ${{ matrix.target }}
     env:
       AWS_REGION: eu-west-2
     permissions:
