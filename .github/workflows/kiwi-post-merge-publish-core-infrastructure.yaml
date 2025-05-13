@@ -1,0 +1,139 @@
+name: Kiwi - Package core infrastructure
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "core/**"
+  workflow_dispatch:
+
+env:
+  AWS_REGION: eu-west-2
+
+jobs:
+  publish_core_to_matrix_dev:
+    name: Publish core to ${{ matrix.target }} dev
+    environment: ${{ matrix.target }}
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [ BAV_DEV, CIC_DEV, F2F_DEV, IPVRETURN_DEV ]
+        include:
+          - target: BAV_DEV
+            ENABLED: "${{ vars.BAV_DEV_ENABLED }}"
+          - target: CIC_DEV
+            ENABLED: "${{ vars.CIC_DEV_ENABLED }}"
+          - target: F2F_DEV
+            ENABLED: "${{ vars.F2F_DEV_ENABLED }}"
+          - target: IPVRETURN_DEV
+            ENABLED: "${{ vars.IPVRETURN_DEV_ENABLED }}"
+    steps:
+      - name: Checkout code
+        id: checkout
+        if: matrix.ENABLED == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        if: ${{ steps.checkout.conclusion == 'success' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11.2
+
+      - name: Setup SAM
+        if: ${{ steps.checkout.conclusion == 'success' }}
+        uses: aws-actions/setup-sam@v2
+
+      - name: Assume temporary AWS role
+        id: setup-aws-role
+        if: ${{ steps.checkout.conclusion == 'success' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars[format('{0}_CORE_GH_ACTIONS_ROLE_ARN', matrix.target)] }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: SAM Validate
+        id: sam-validate
+        if: ${{ steps.setup-aws-role.conclusion == 'success' }}
+        run: sam validate --region ${{ env.AWS_REGION }} -t core/template.yaml
+
+      - name: Deploy SAM template
+        if: ${{ steps.sam-validate.conclusion == 'success' }}
+        uses: govuk-one-login/devplatform-upload-action@v3.9.2
+        with:
+            artifact-bucket-name: ${{ vars[format('{0}_CORE_ARTIFACT_SOURCE_BUCKET_NAME', matrix.target)] }}
+            signing-profile-name: ""
+            working-directory: ./core
+
+      - name: Inform of disabled status
+        if: matrix.ENABLED != 'true'
+        run: echo "🔶 Set repository variable ${{ matrix.target }}_ENABLED to 'true' to enable	🔶" >> $GITHUB_STEP_SUMMARY
+
+
+  publish_core_to_matrix_build:
+    name: Publish core to ${{ matrix.target }} build
+    needs: publish_core_to_matrix_dev
+    environment: ${{ matrix.target }}
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [ BAV_BUILD, CIC_BUILD, F2F_BUILD, IPVRETURN_BUILD ]
+        include:
+          - target: BAV_BUILD
+            ENABLED: "${{ vars.BAV_BUILD_ENABLED }}"
+          - target: CIC_BUILD
+            ENABLED: "${{ vars.CIC_BUILD_ENABLED }}"
+          - target: F2F_BUILD
+            ENABLED: "${{ vars.F2F_BUILD_ENABLED }}"
+          - target: IPVRETURN_BUILD
+            ENABLED: "${{ vars.IPVRETURN_BUILD_ENABLED }}"
+    steps:
+      - name: Checkout code
+        id: checkout
+        if: matrix.ENABLED == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        if: ${{ steps.checkout.conclusion == 'success' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11.2
+
+      - name: Setup SAM
+        if: ${{ steps.checkout.conclusion == 'success' }}
+        uses: aws-actions/setup-sam@v2
+
+      - name: Assume temporary AWS role
+        id: setup-aws-role
+        if: ${{ steps.checkout.conclusion == 'success' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars[format('{0}_CORE_GH_ACTIONS_ROLE_ARN', matrix.target)] }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: SAM Validate
+        id: sam-validate
+        if: ${{ steps.setup-aws-role.conclusion == 'success' }}
+        run: sam validate --region ${{ env.AWS_REGION }} -t core/template.yaml
+
+      - name: Deploy SAM template
+        if: ${{ steps.sam-validate.conclusion == 'success' }}
+        uses: govuk-one-login/devplatform-upload-action@v3.9.2
+        with:
+            artifact-bucket-name: ${{ vars[format('{0}_ARTIFACT_SOURCE_BUCKET_NAME', matrix.target)] }}
+            signing-profile-name: ""
+            working-directory: ./core
+
+      - name: Inform of disabled status
+        if: matrix.ENABLED != 'true'
+        run: echo "🔶 Set repository variable ${{ matrix.target }}_ENABLED to 'true' to enable	🔶" >> $GITHUB_STEP_SUMMARY
