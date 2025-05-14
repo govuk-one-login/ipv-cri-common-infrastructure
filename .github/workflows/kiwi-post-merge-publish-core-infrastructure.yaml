@@ -4,8 +4,9 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "core/**"
+      - IPS-1516-test-env
+    # paths:
+    #   - "core/**"
   workflow_dispatch:
 
 env:
@@ -91,12 +92,16 @@ jobs:
         include:
           - target: BAV_BUILD
             ENABLED: "${{ vars.BAV_BUILD_ENABLED }}"
+            GH_ACTIONS_ROLE_ARN: BAV_BUILD_CORE_GH_ACTIONS_ROLE_ARN
           - target: CIC_BUILD
             ENABLED: "${{ vars.CIC_BUILD_ENABLED }}"
+            GH_ACTIONS_ROLE_ARN: CIC_BUILD_CORE_GH_ACTIONS_ROLE_ARN
           - target: F2F_BUILD
             ENABLED: "${{ vars.F2F_BUILD_ENABLED }}"
+            GH_ACTIONS_ROLE_ARN: placeholder
           - target: IPVRETURN_BUILD
             ENABLED: "${{ vars.IPVRETURN_BUILD_ENABLED }}"
+            GH_ACTIONS_ROLE_ARN: placeholder
     steps:
       - name: Checkout code
         id: checkout
@@ -118,7 +123,7 @@ jobs:
         if: ${{ steps.checkout.conclusion == 'success' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars[format('{0}_CORE_GH_ACTIONS_ROLE_ARN', matrix.target)] }}
+          role-to-assume: ${{ vars[matrix.GH_ACTIONS_ROLE_ARN] }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: SAM Validate
