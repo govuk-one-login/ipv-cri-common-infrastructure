@@ -13,7 +13,7 @@ env:
 
 jobs:
   publish_core_to_matrix_dev:
-    name: Publish core to ${{ matrix.target }} dev
+    name: Publish core to ${{ matrix.target }}
     environment: ${{ matrix.target }}
     permissions:
       id-token: write
@@ -76,7 +76,7 @@ jobs:
 
 
   publish_core_to_matrix_build:
-    name: Publish core to ${{ matrix.target }} build
+    name: Publish core to ${{ matrix.target }}
     needs: publish_core_to_matrix_dev
     environment: ${{ matrix.target }}
     permissions:
@@ -130,7 +130,7 @@ jobs:
         if: ${{ steps.sam-validate.conclusion == 'success' }}
         uses: govuk-one-login/devplatform-upload-action@v3.9.2
         with:
-            artifact-bucket-name: ${{ vars[format('{0}_ARTIFACT_SOURCE_BUCKET_NAME', matrix.target)] }}
+            artifact-bucket-name: ${{ vars[format('{0}_CORE_ARTIFACT_SOURCE_BUCKET_NAME', matrix.target)] }}
             signing-profile-name: ""
             working-directory: ./core
 
