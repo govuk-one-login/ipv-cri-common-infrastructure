@@ -93,7 +93,7 @@ jobs:
 
       - name: Deploy SAM template
         if: matrix.ENABLED == 'true'
-        uses: govuk-one-login/devplatform-upload-action@v3.9.2
+        uses: govuk-one-login/devplatform-upload-action@v3.10.0
         with:
             artifact-bucket-name: ${{ secrets[matrix.ARTIFACT_SOURCE_BUCKET_NAME_SECRET] }}
             signing-profile-name: ""
@@ -186,7 +186,7 @@ jobs:
 
       - name: Deploy SAM template
         if: matrix.ENABLED == 'true'
-        uses: govuk-one-login/devplatform-upload-action@v3.9.2
+        uses: govuk-one-login/devplatform-upload-action@v3.10.0
         with:
             artifact-bucket-name: ${{ secrets[matrix.ARTIFACT_SOURCE_BUCKET_NAME_SECRET] }}
             signing-profile-name: ""
