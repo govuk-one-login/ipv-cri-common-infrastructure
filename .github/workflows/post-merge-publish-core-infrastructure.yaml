@@ -89,7 +89,11 @@ jobs:
 
       - name: SAM Validate
         if: matrix.ENABLED == 'true'
-        run: sam validate --region ${{ env.AWS_REGION }} -t core/template.yaml
+        run: sam validate --region ${{ env.AWS_REGION }} -t core/template.yaml --lint
+      
+      - name: SAM build
+        if: matrix.ENABLED == 'true'
+        run: sam build -t core/template.yaml
 
       - name: Deploy SAM template
         if: matrix.ENABLED == 'true'
@@ -181,8 +185,11 @@ jobs:
 
       - name: SAM Validate
         if: matrix.ENABLED == 'true'
-        run: sam validate --region ${{ env.AWS_REGION }} -t core/template.yaml
+        run: sam validate --region ${{ env.AWS_REGION }} -t core/template.yaml --lint
 
+      - name: SAM build
+        if: matrix.ENABLED == 'true'
+        run: sam build -t core/template.yaml
 
       - name: Deploy SAM template
         if: matrix.ENABLED == 'true'
