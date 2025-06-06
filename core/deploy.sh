@@ -19,9 +19,9 @@ if [ -z "$common_stack_name" ]; then
   common_stack_name="di-ipv-core-infra-local"
 fi
 
-sam validate -t ../template.yaml --lint
+sam validate -t template.yaml --lint
 
-sam build -t ../template.yaml --cached --parallel
+sam build -t template.yaml --cached --parallel
 
 echo -e "👉 deploying di-ipv-core-infra with:"
 echo -e "\tstack name: ${GREEN}$stack_name${NOCOLOR}"

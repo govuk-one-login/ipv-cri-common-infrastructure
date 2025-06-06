@@ -9,38 +9,17 @@ Parameters:
   ServiceName:
     Type: String
     Default: "none"
-  VpcStackName:
-    Description: VPC Stack name
-    Type: String
-    Default: "none"
+#  VpcStackName:
+#    Description: VPC Stack name
+#    Type: String
+#    Default: "none"
   
-Conditions:
-  UseVpc:
-    Fn::Not:
-      - Fn::Equals:
-          - !Ref VpcStackName
-          - "none"
-
-Globals:
-  Function:
-    Timeout: 30
-    CodeUri: ..
-    Runtime: nodejs20.x
-    Architectures: [arm64]
-    Environment:
-      Variables:
-        NODE_OPTIONS: --enable-source-maps
-        AWS_STACK_NAME: !Sub ${AWS::StackName}
-        POWERTOOLS_LOG_LEVEL: INFO
-        POWERTOOLS_METRICS_NAMESPACE: !Sub ${AWS::StackName}
-    VpcConfig: !If
-      - UseVpc
-      - SecurityGroupIds:
-          - Fn::ImportValue: !Sub "${VpcStackName}-AWSServicesEndpointSecurityGroupId"
-        SubnetIds:
-          - Fn::ImportValue: !Sub "${VpcStackName}-PrivateSubnetIdA"
-          - Fn::ImportValue: !Sub "${VpcStackName}-PrivateSubnetIdB"
-      - !Ref AWS::NoValue
+#Conditions:
+#  UseVpc:
+#    Fn::Not:
+#      - Fn::Equals:
+#          - !Ref VpcStackName
+#          - "none"
 
 Resources:
   CriVcSigningKey1:
@@ -283,12 +262,27 @@ Resources:
       BuildProperties:
         Sourcemap: true
     Properties:
-      Handler: core/publish-key/src/publish-key-handler.lambdaHandler
+      CodeUri: .
+      Handler: publish-key/src/publish-key-handler.lambdaHandler
       FunctionName: !Sub "${AWS::StackName}-publishKey"
+      Timeout: 30
+      Runtime: nodejs20.x
+      Architectures: [arm64]
       Environment:
         Variables:
+          NODE_OPTIONS: --enable-source-maps
+          AWS_STACK_NAME: !Sub "${AWS::StackName}"
+          POWERTOOLS_LOG_LEVEL: INFO
+          POWERTOOLS_METRICS_NAMESPACE: !Sub "${AWS::StackName}"
           POWERTOOLS_SERVICE_NAME: !Sub "${AWS::StackName}-publishKey"
-      Timeout: 15
+#      VpcConfig: !If
+#        - UseVpc
+#        - SecurityGroupIds:
+#            - Fn::ImportValue: !Sub "${VpcStackName}-AWSServicesEndpointSecurityGroupId"
+#          SubnetIds:
+#            - Fn::ImportValue: !Sub "${VpcStackName}-PrivateSubnetIdA"
+#            - Fn::ImportValue: !Sub "${VpcStackName}-PrivateSubnetIdB"
+#        - !Ref AWS::NoValue
 
   PublishKeyFunctionLogGroup:
     Type: AWS::Logs::LogGroup
