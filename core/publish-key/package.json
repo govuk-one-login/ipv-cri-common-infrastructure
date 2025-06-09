@@ -1,0 +1,14 @@
+{
+  "name": "publish-key",
+  "description": "",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "unit": "jest --verbose",
+    "test": "npm run unit --",
+    "test:coverage": "npm run unit -- --coverage",
+    "compile": "tsc"
+  },
+  "dependencies": {}
+}
+

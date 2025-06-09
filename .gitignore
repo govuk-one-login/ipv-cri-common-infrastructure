@@ -2,3 +2,12 @@
 .aws-sam/
 *.iml
 *venv/
+
+# Dependency directories
+node_modules/
+
+**/coverage
+*.js
+
+# Ignore build output directory
+build
