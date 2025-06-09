@@ -5,8 +5,9 @@ Description: "Digital Identity IPV CRI Core Infrastructure"
 Parameters:
   Environment:
     Type: String
-    Default: "dev"
+    Default: "local"
     AllowedValues:
+      - "local"
       - "dev"
       - "build"
       - "staging"
@@ -17,6 +18,7 @@ Parameters:
     Default: "none"
 
 Conditions:
+  IsNotLocal: !Not [!Equals [!Ref Environment, local]]
   IsProd: !Equals [!Ref Environment, production]
 
 Resources:
@@ -175,6 +177,7 @@ Resources:
           Value: "Published OAuth or DID keys bucket for key rotation state machine"
 
   PublishedKeysS3BucketPolicy:
+    Condition: IsNotLocal
     Type: AWS::S3::BucketPolicy
     Properties:
       Bucket: !Ref PublishedKeysS3Bucket
