@@ -5,8 +5,9 @@ Description: "Digital Identity IPV CRI Core Infrastructure"
 Parameters:
   Environment:
     Type: String
-    Default: "dev"
+    Default: "local"
     AllowedValues:
+      - "local"
       - "dev"
       - "build"
       - "staging"
@@ -17,6 +18,11 @@ Parameters:
     Default: "none"
 
 Conditions:
+  IsDev: !Equals [!Ref Environment, dev]
+  IsLocal: !Equals [!Ref Environment, local]
+  IsNotLocal: !Not [!Condition IsLocal]
+  IsDevOrLocal: !Or [!Condition IsDev, !Condition IsLocal]
+  IsNotDevOrLocal: !Not [!Condition IsDevOrLocal]
   IsProd: !Equals [!Ref Environment, production]
 
 Resources:
@@ -158,13 +164,15 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-      ObjectLockEnabled: true # If testing in dev with a local stack, remove `ObjectLockEnabled` and the `ObjectLockConfiguration` section below. See README.md for further details.
-      ObjectLockConfiguration:
-        ObjectLockEnabled: Enabled
-        Rule:
-          DefaultRetention:
-            Mode: !If [ IsProd, "COMPLIANCE", "GOVERNANCE" ]
-            Days: 1
+      ObjectLockEnabled: !If [ IsNotDevOrLocal, true, !Ref "AWS::NoValue" ]
+      ObjectLockConfiguration: !If
+        - IsNotDevOrLocal
+        - ObjectLockEnabled: Enabled
+          Rule:
+            DefaultRetention:
+              Mode: !If [ IsProd, "COMPLIANCE", "GOVERNANCE" ]
+              Days: 1
+        - !Ref "AWS::NoValue"
       VersioningConfiguration:
         Status: Enabled
       NotificationConfiguration:
@@ -176,6 +184,7 @@ Resources:
 
   PublishedKeysS3BucketPolicy:
     Type: AWS::S3::BucketPolicy
+    Condition: IsNotLocal
     Properties:
       Bucket: !Ref PublishedKeysS3Bucket
       PolicyDocument:

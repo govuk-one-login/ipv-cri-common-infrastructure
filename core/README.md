@@ -18,7 +18,7 @@ Note that SSM params are not yet part of this stack.
 > [!IMPORTANT]
 > The published keys bucket has `ObjectLock` enabled as per the RFC for key-rotation. This is enabled in `COMPLIANCE` mode in production, and `GOVERNANCE` mode in lower environments. This protects the `jwks.json` file and means it cannot be overwritten or deleted by any user. See AWS docs [here](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html).
 >
-> For development work, it is advised to disable `ObjectLock` and remove `ObjectLockConfiguration` so the dev file can be deleted once the ticket is complete.
+> For development work, i.e if the core stack is deployed via sam deploy, `ObjectLock` and `ObjectLockConfiguration` is switched off so the dev file can be deleted once the ticket is complete.
 
 ## Deployment
 
