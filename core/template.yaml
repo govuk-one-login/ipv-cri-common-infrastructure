@@ -158,7 +158,7 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-      ObjectLockEnabled: true
+      ObjectLockEnabled: true # If testing in dev with a local stack, remove `ObjectLockEnabled` and the `ObjectLockConfiguration` section below. See README.md for further details.
       ObjectLockConfiguration:
         ObjectLockEnabled: Enabled
         Rule:
