@@ -8,18 +8,18 @@ Parameters:
     Default: "none"
   ServiceName:
     Type: String
+    Default: "passport"
+  VpcStackName:
+    Description: VPC Stack name
+    Type: String
     Default: "none"
-#  VpcStackName:
-#    Description: VPC Stack name
-#    Type: String
-#    Default: "none"
   
-#Conditions:
-#  UseVpc:
-#    Fn::Not:
-#      - Fn::Equals:
-#          - !Ref VpcStackName
-#          - "none"
+Conditions:
+  UseVpc:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref VpcStackName
+          - "none"
 
 Resources:
   CriVcSigningKey1:
@@ -150,7 +150,7 @@ Resources:
     Type: AWS::S3::Bucket
     # checkov:skip=CKV_AWS_18: "Ensure the S3 bucket has access logging enabled"
     Properties:
-      BucketName: !Sub "govuk-one-login-${ServiceName}-published-keys-${Environment}"
+      BucketName: !Sub "govuk-one-login-${ServiceName}-published-keys-${Environment}-${AWS::StackName} "
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -275,14 +275,14 @@ Resources:
           POWERTOOLS_LOG_LEVEL: INFO
           POWERTOOLS_METRICS_NAMESPACE: !Sub "${AWS::StackName}"
           POWERTOOLS_SERVICE_NAME: !Sub "${AWS::StackName}-publishKey"
-#      VpcConfig: !If
-#        - UseVpc
-#        - SecurityGroupIds:
-#            - Fn::ImportValue: !Sub "${VpcStackName}-AWSServicesEndpointSecurityGroupId"
-#          SubnetIds:
-#            - Fn::ImportValue: !Sub "${VpcStackName}-PrivateSubnetIdA"
-#            - Fn::ImportValue: !Sub "${VpcStackName}-PrivateSubnetIdB"
-#        - !Ref AWS::NoValue
+      VpcConfig: !If
+        - UseVpc
+        - SecurityGroupIds:
+            - Fn::ImportValue: !Sub "${VpcStackName}-AWSServicesEndpointSecurityGroupId"
+          SubnetIds:
+            - Fn::ImportValue: !Sub "${VpcStackName}-PrivateSubnetIdA"
+            - Fn::ImportValue: !Sub "${VpcStackName}-PrivateSubnetIdB"
+        - !Ref AWS::NoValue
 
   PublishKeyFunctionLogGroup:
     Type: AWS::Logs::LogGroup
