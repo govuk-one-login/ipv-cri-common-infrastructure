@@ -5,9 +5,8 @@ Description: "Digital Identity IPV CRI Core Infrastructure"
 Parameters:
   Environment:
     Type: String
-    Default: "local"
+    Default: "dev"
     AllowedValues:
-      - "local"
       - "dev"
       - "build"
       - "staging"
@@ -18,7 +17,7 @@ Parameters:
     Default: "none"
 
 Conditions:
-  IsNotLocal: !Not [!Equals [!Ref Environment, local]]
+  IsNotDev: !Not [!Equals [!Ref Environment, dev]]
   IsProd: !Equals [!Ref Environment, production]
 
 Resources:
@@ -160,13 +159,15 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-      ObjectLockEnabled: true # If testing in dev with a local stack, remove `ObjectLockEnabled` and the `ObjectLockConfiguration` section below. See README.md for further details.
-      ObjectLockConfiguration:
-        ObjectLockEnabled: Enabled
-        Rule:
-          DefaultRetention:
-            Mode: !If [ IsProd, "COMPLIANCE", "GOVERNANCE" ]
-            Days: 1
+      ObjectLockEnabled: !If [ IsNotDev, true, !Ref "AWS::NoValue" ]
+      ObjectLockConfiguration: !If
+        - IsNotDev
+        - ObjectLockEnabled: Enabled
+          Rule:
+            DefaultRetention:
+              Mode: !If [ IsProd, "COMPLIANCE", "GOVERNANCE" ]
+              Days: 1
+        - !Ref "AWS::NoValue"
       VersioningConfiguration:
         Status: Enabled
       NotificationConfiguration:
@@ -177,7 +178,6 @@ Resources:
           Value: "Published OAuth or DID keys bucket for key rotation state machine"
 
   PublishedKeysS3BucketPolicy:
-    Condition: IsNotLocal
     Type: AWS::S3::BucketPolicy
     Properties:
       Bucket: !Ref PublishedKeysS3Bucket
