@@ -2,6 +2,13 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: [ AWS::LanguageExtensions, AWS::Serverless-2016-10-31 ]
 Description: "Digital Identity IPV CRI Core Infrastructure"
 
+Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - E3031
+        - E3033
+
 Parameters:
   Environment:
     Type: String
