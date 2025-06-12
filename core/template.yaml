@@ -1,11 +1,18 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Transform: "AWS::Serverless-2016-10-31"
+Transform: [ AWS::LanguageExtensions, AWS::Serverless-2016-10-31 ]
 Description: "Digital Identity IPV CRI Core Infrastructure"
 
 Parameters:
   Environment:
     Type: String
-    Default: "none"
+    Default: "local"
+    AllowedValues:
+      - "local"
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
   ServiceName:
     Type: String
     Default: "none"
@@ -37,6 +44,14 @@ Conditions:
 #      - Fn::Equals:
 #          - !Ref VpcStackName
 #          - "none"
+
+Conditions:
+  IsDev: !Equals [!Ref Environment, dev]
+  IsLocal: !Equals [!Ref Environment, local]
+  IsNotLocal: !Not [!Condition IsLocal]
+  IsDevOrLocal: !Or [!Condition IsDev, !Condition IsLocal]
+  IsNotDevOrLocal: !Not [!Condition IsDevOrLocal]
+  IsProd: !Equals [!Ref Environment, production]
 
 Resources:
   CriVcSigningKey1:
@@ -177,6 +192,15 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
+      ObjectLockEnabled: !If [ IsNotDevOrLocal, true, !Ref "AWS::NoValue" ]
+      ObjectLockConfiguration: !If
+        - IsNotDevOrLocal
+        - ObjectLockEnabled: Enabled
+          Rule:
+            DefaultRetention:
+              Mode: !If [ IsProd, "COMPLIANCE", "GOVERNANCE" ]
+              Days: 1
+        - !Ref "AWS::NoValue"
       VersioningConfiguration:
         Status: Enabled
       NotificationConfiguration:
@@ -188,6 +212,7 @@ Resources:
 
   PublishedKeysS3BucketPolicy:
     Type: AWS::S3::BucketPolicy
+    Condition: IsNotLocal
     Properties:
       Bucket: !Ref PublishedKeysS3Bucket
       PolicyDocument:
