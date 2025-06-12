@@ -32,6 +32,12 @@ Parameters:
 #    Default: "none"
   
 Conditions:
+  IsDev: !Equals [!Ref Environment, dev]
+  IsLocal: !Equals [!Ref Environment, local]
+  IsNotLocal: !Not [!Condition IsLocal]
+  IsDevOrLocal: !Or [!Condition IsDev, !Condition IsLocal]
+  IsNotDevOrLocal: !Not [!Condition IsDevOrLocal]
+  IsProd: !Equals [!Ref Environment, production]
   UseCodeSigning: !Not
     - !Equals [!Ref CodeSigningConfigArn, "none"]
   UsePermissionsBoundary:
@@ -44,14 +50,6 @@ Conditions:
 #      - Fn::Equals:
 #          - !Ref VpcStackName
 #          - "none"
-
-Conditions:
-  IsDev: !Equals [!Ref Environment, dev]
-  IsLocal: !Equals [!Ref Environment, local]
-  IsNotLocal: !Not [!Condition IsLocal]
-  IsDevOrLocal: !Or [!Condition IsDev, !Condition IsLocal]
-  IsNotDevOrLocal: !Not [!Condition IsDevOrLocal]
-  IsProd: !Equals [!Ref Environment, production]
 
 Resources:
   CriVcSigningKey1:
