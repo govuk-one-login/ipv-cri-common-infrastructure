@@ -9,12 +9,29 @@ Parameters:
   ServiceName:
     Type: String
     Default: "none"
+  CodeSigningConfigArn:
+    Type: String
+    Description: >
+      The ARN of the Code Signing Config to use, provided by the deployment pipeline
+    Default: "none"
+  PermissionsBoundary:
+    Type: String
+    Description: >
+      The ARN of the permissions boundary to apply to any role created by the template
+    Default: "none"
 #  VpcStackName:
 #    Description: VPC Stack name
 #    Type: String
 #    Default: "none"
   
-#Conditions:
+Conditions:
+  UseCodeSigning: !Not
+    - !Equals [!Ref CodeSigningConfigArn, "none"]
+  UsePermissionsBoundary:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref PermissionsBoundary
+          - "none"
 #  UseVpc:
 #    Fn::Not:
 #      - Fn::Equals:
@@ -275,6 +292,14 @@ Resources:
           POWERTOOLS_LOG_LEVEL: INFO
           POWERTOOLS_METRICS_NAMESPACE: !Sub "${AWS::StackName}"
           POWERTOOLS_SERVICE_NAME: !Sub "${AWS::StackName}-publishKey"
+      CodeSigningConfigArn: !If
+        - UseCodeSigning
+        - !Ref CodeSigningConfigArn
+        - !Ref AWS::NoValue
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
 #      VpcConfig: !If
 #        - UseVpc
 #        - SecurityGroupIds:

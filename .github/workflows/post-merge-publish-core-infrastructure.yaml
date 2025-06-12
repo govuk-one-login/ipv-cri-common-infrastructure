@@ -10,6 +10,7 @@ on:
 jobs:
   publish_core_to_matrix_dev:
     name: Publish core to ${{ matrix.target }} dev
+    environment: ${{ matrix.target }}
     strategy:
       matrix:
         target: [ ADDRESS_DEV, COMMON_DEV, DL_DEV, FRAUD_DEV, HMRC_CHECK_DEV, HMRC_KBV_DEV, KBV_DEV, PASSPORT_DEV, IDSRE_DEV, CIC_DEV ]
@@ -55,7 +56,6 @@ jobs:
             ARTIFACT_SOURCE_BUCKET_NAME_SECRET: CIC_DEV_CORE_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_SECRET: CIC_DEV_CORE_GH_ACTIONS_ROLE_ARN
 
-
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -90,18 +90,20 @@ jobs:
       - name: SAM Validate
         if: matrix.ENABLED == 'true'
         run: sam validate --region ${{ env.AWS_REGION }} -t core/template.yaml --lint
-      
+
       - name: SAM build
         if: matrix.ENABLED == 'true'
-        run: sam build -t core/template.yaml
+        run: |
+          mkdir out
+          sam build -t core/template.yaml -b out/
 
       - name: Deploy SAM template
         if: matrix.ENABLED == 'true'
         uses: govuk-one-login/devplatform-upload-action@v3.9.2
         with:
             artifact-bucket-name: ${{ secrets[matrix.ARTIFACT_SOURCE_BUCKET_NAME_SECRET] }}
-            signing-profile-name: ""
-            working-directory: ./core
+            signing-profile-name: ${{ vars[format('{0}_CORE_SIGNING_PROFILE_NAME', matrix.target)] }}
+            working-directory: ./out
 
       - name: Inform of disabled status
         if: matrix.ENABLED != 'true'
@@ -111,6 +113,7 @@ jobs:
   publish_core_to_matrix_build:
     name: Publish core to ${{ matrix.target }} build
     needs: publish_core_to_matrix_dev
+    environment: ${{ matrix.target }}
     strategy:
       matrix:
         target: [ ADDRESS_BUILD, COMMON_BUILD, DL_BUILD, FRAUD_BUILD, HMRC_CHECK_BUILD, HMRC_KBV_BUILD, KBV_BUILD, PASSPORT_BUILD, CIC_BUILD ]
@@ -189,15 +192,17 @@ jobs:
 
       - name: SAM build
         if: matrix.ENABLED == 'true'
-        run: sam build -t core/template.yaml
+        run: |
+          mkdir out
+          sam build -t core/template.yaml -b out/
 
       - name: Deploy SAM template
         if: matrix.ENABLED == 'true'
         uses: govuk-one-login/devplatform-upload-action@v3.9.2
         with:
             artifact-bucket-name: ${{ secrets[matrix.ARTIFACT_SOURCE_BUCKET_NAME_SECRET] }}
-            signing-profile-name: ""
-            working-directory: ./core
+            signing-profile-name: ${{ vars[format('{0}_CORE_SIGNING_PROFILE_NAME', matrix.target)] }}
+            working-directory: ./out
 
       - name: Inform of disabled status
         if: matrix.ENABLED != 'true'
