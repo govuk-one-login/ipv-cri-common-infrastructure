@@ -9,6 +9,7 @@
     "test:coverage": "npm run unit -- --coverage",
     "compile": "tsc"
   },
-  "dependencies": {}
+  "dependencies": {
+  }
 }
 

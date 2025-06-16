@@ -150,7 +150,7 @@ Resources:
     Type: AWS::S3::Bucket
     # checkov:skip=CKV_AWS_18: "Ensure the S3 bucket has access logging enabled"
     Properties:
-      BucketName: !Sub "govuk-one-login-${ServiceName}-published-keys-${Environment}-${AWS::StackName} "
+      BucketName: !Sub "govuk-one-login-${ServiceName}-published-keys-${Environment}-rrob"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -186,74 +186,6 @@ Resources:
             Principal:
               AWS:
                 - !Sub "arn:aws:iam::${AWS::AccountId}:root"
-          - Sid: "2. Allow Read permissions"
-            Effect: Allow
-            Principal:
-              Service:
-                - apigateway.amazonaws.com
-                - lambda.amazonaws.com
-            Action:
-              - s3:ListBucket
-              - s3:GetBucketLocation
-              - s3:GetObject
-            Resource:
-              - !GetAtt PublishedKeysS3Bucket.Arn
-              - !Sub ${PublishedKeysS3Bucket.Arn}/*
-            Condition:
-              StringEquals:
-                "aws:PrincipalTag/key_consumer_type":
-                  - "use"
-                  - "manage"
-          - Sid: "3. Deny Read permissions if tag is missing, or not equal to use/manage"
-            Effect: Deny
-            Principal:
-              AWS: "*"
-            Action:
-              - s3:ListBucket
-              - s3:GetBucketLocation
-              - s3:GetObject
-            Resource:
-              - !GetAtt PublishedKeysS3Bucket.Arn
-              - !Sub ${PublishedKeysS3Bucket.Arn}/*
-            Condition:
-              StringNotEqualsIfExists:
-                "aws:PrincipalTag/key_consumer_type":
-                  - "manage"
-                  - "use"
-          - Sid: "4. Allow Write permission for manage tag only"
-            Effect: Allow
-            Principal:
-              Service:
-                - apigateway.amazonaws.com
-                - lambda.amazonaws.com
-            Action:
-              - "s3:Put*"
-            Resource:
-              - !Sub ${PublishedKeysS3Bucket.Arn}/*
-            Condition:
-              StringEquals:
-                "aws:PrincipalTag/key_consumer_type": "manage"
-          - Sid: "5. Deny Write permission if tag is missing, or not equal to manage"
-            Effect: Deny
-            Principal:
-              AWS: "*"
-            Action:
-              - "s3:Put*"
-            Resource:
-              - !Sub ${PublishedKeysS3Bucket.Arn}/*
-            Condition:
-              StringNotEqualsIfExists:
-                "aws:PrincipalTag/key_consumer_type": "manage"
-          - Sid: "6. Deny all access if not using SecureTransport"
-            Effect: Deny
-            Principal:
-              AWS: "*"
-            Action: "*"
-            Resource:
-              - !Sub ${PublishedKeysS3Bucket.Arn}/*
-            Condition:
-              Bool:
-                aws:SecureTransport: false
 
   PublishKeyFunction:
     Type: AWS::Serverless::Function
@@ -262,6 +194,7 @@ Resources:
       BuildProperties:
         Sourcemap: true
     Properties:
+      Role: !GetAtt PublishKeyFunctionRole.Arn
       CodeUri: .
       Handler: publish-key/src/publish-key-handler.lambdaHandler
       FunctionName: !Sub "${AWS::StackName}-publishKey"
@@ -272,9 +205,12 @@ Resources:
         Variables:
           NODE_OPTIONS: --enable-source-maps
           AWS_STACK_NAME: !Sub "${AWS::StackName}"
-          POWERTOOLS_LOG_LEVEL: INFO
+          POWERTOOLS_LOG_LEVEL: "INFO"
           POWERTOOLS_METRICS_NAMESPACE: !Sub "${AWS::StackName}"
           POWERTOOLS_SERVICE_NAME: !Sub "${AWS::StackName}-publishKey"
+          REGION: !Sub "${AWS::Region}"
+          JWKS_BUCKET_NAME: !Ref PublishedKeysS3Bucket
+          DECRYPTION_KEY_ID: !Ref CriDecryptionKey1
       VpcConfig: !If
         - UseVpc
         - SecurityGroupIds:
@@ -283,12 +219,51 @@ Resources:
             - Fn::ImportValue: !Sub "${VpcStackName}-PrivateSubnetIdA"
             - Fn::ImportValue: !Sub "${VpcStackName}-PrivateSubnetIdB"
         - !Ref AWS::NoValue
+      Tags:
+        key_consumer_type : "manage"
 
   PublishKeyFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-${PublishKeyFunction}"
       RetentionInDays: 30
+
+  PublishKeyFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+        - "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
+      Policies:
+        - PolicyName: PublishKeyFunctionAccessPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "kms:DescribeKey"
+                  - "kms:GetPublicKey"
+                Resource:
+                  - !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*"
+              - Effect: Allow
+                Action:
+                  - "s3:PutObject"
+                  - "s3:GetObject"
+                  - "s3:ListBucket"
+                Resource:
+                  - !Sub "arn:aws:s3:::govuk-one-login-${ServiceName}-published-keys-${Environment}-rrob"
+                  - !Sub "arn:aws:s3:::govuk-one-login-${ServiceName}-published-keys-${Environment}-rrob/*"
+      Tags:
+        - Key: "key_consumer_type"
+          Value: "manage"
 
 Outputs:
   TableNameSession1:
