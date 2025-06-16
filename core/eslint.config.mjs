@@ -12,15 +12,6 @@ export default tseslint.config(
       languageOptions: {
         ecmaVersion: 2020,
         sourceType: "module",
-//         globals: {
-//           ...globals.node,
-//           ...globals.mocha,
-//           ...globals.browser,
-//           sinon: true,
-//           expect: true,
-//           setupDefaultMocks: true,
-//           axe: true
-//         }
       }
     },
   {
@@ -43,5 +34,4 @@ export default tseslint.config(
         ],
     }
   },
-
 );
