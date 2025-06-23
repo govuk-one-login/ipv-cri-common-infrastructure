@@ -84,19 +84,11 @@ describe("Tests", () => {
                 message: "Building wellknown JWK endpoint with key " + [keyID],
             });
 
-            //             const expectedPublicKey = crypto
-            //                 .createPublicKey({
-            //                     key: publicKey,
-            //                     type: "spki",
-            //                     format: "der",
-            //                 })
-            //                 .export({format: "jwk"});
-
             const expectedJwk = {
                 ...mockPublicKey,
                 use: "enc",
                 kid: mockedHashedKid,
-                alg: "RSA_OAEP_256",
+                alg: "RSA_OAEP_256"
             } as unknown as Jwk;
 
             expect(s3Mock).toHaveReceivedNthCommandWith(1, PutObjectCommand, {
@@ -115,7 +107,7 @@ describe("Tests", () => {
             // const handlerClass: PublishKeyHandler = new PublishKeyHandler(keyID, bucketName, mockKmsClient);
 
             expect(() => {
-              new PublishKeyHandler(undefined, bucketName, mockKmsClient);
+               new PublishKeyHandler(undefined, bucketName, mockKmsClient);
             }).toThrow();
 
             // expect(logger.error).toHaveBeenCalledWith({

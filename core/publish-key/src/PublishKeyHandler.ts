@@ -6,7 +6,7 @@ import { NodeHttpHandler } from "@smithy/node-http-handler";
 import crypto from "crypto";
 import { KMS } from "@aws-sdk/client-kms";
 
-// const POWERTOOLS_LOG_LEVEL : string = process.env.POWERTOOLS_LOG_LEVEL ?? "INFO";
+const POWERTOOLS_LOG_LEVEL : string = process.env.POWERTOOLS_LOG_LEVEL ?? "INFO";
 export const logger = new Logger({ serviceName: "PublishKeyHandler" });
 
 // REMEMBER TO CHANGE BACK FROM HARDCODED "INFO"!!!!!!!!!!!
@@ -14,7 +14,7 @@ export const logger = new Logger({ serviceName: "PublishKeyHandler" });
 export class PublishKeyHandler implements LambdaInterface {
     decryptionKeyID: string;
     bucketName: string;
-    kmsClient: any;
+    kmsClient: KMS;
 
     constructor(decryptionKeyID1: string | undefined, bucketName: string | undefined, kmsClient: any | undefined) {
 
@@ -47,7 +47,7 @@ export class PublishKeyHandler implements LambdaInterface {
         }),
     });
 
-    public async handler(): Promise<string | void | Error> {
+    public async handler(): Promise<string | undefined> {
         try {
             logger.info(`DECRYPTION_KEY_ID = ${this.decryptionKeyID}`);
             logger.info(`JWKS_BUCKET_NAME = ${this.bucketName}`);
@@ -145,7 +145,7 @@ export class PublishKeyHandler implements LambdaInterface {
     }
 }
 
-const DECRYPTION_KEY_ID: string | undefined = process.env.DECRYPTION_KEY_ID;
+const DECRYPTION_KEY_ID: string = process.env.DECRYPTION_KEY_ID ?? "NOT_SET";
 const JWKS_BUCKET_NAME: string = process.env.JWKS_BUCKET_NAME ?? "NOT_SET";
 const KMS_CLIENT = new KMS({
     region: process.env.REGION,
