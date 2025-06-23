@@ -11,7 +11,6 @@ export const logger = new Logger({ serviceName: "PublishKeyHandler" });
 
 // REMEMBER TO CHANGE BACK FROM HARDCODED "INFO"!!!!!!!!!!!
 
-
 export class PublishKeyHandler implements LambdaInterface {
   decryptionKeyID: string;
   bucketName: string;

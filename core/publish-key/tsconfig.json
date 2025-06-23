@@ -16,5 +16,5 @@
   },
   "exclude": ["node_modules", "build", "coverage"],
   "include": [
-    "src", "tests"]
+    "src/*.ts", "tests/*.ts"]
 }
