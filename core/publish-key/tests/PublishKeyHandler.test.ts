@@ -1,24 +1,12 @@
 import { PublishKeyHandler, logger } from "../src/PublishKeyHandler";
-import { Jwk } from "../utils/Types";
-// import crypto, { KeyObject } from "crypto";
-// import "aws-sdk-client-mock-jest";
 import { expect, jest } from "@jest/globals";
-import { mock } from "jest-mock-extended";
-import { generateKeyPairSync, RSAKeyPairOptions } from "node:crypto";
 import { mockClient } from "aws-sdk-client-mock";
-// import { KMS } from "@aws-sdk/client-kms";
+import "aws-sdk-client-mock-jest";
 import * as AWS from "@aws-sdk/client-kms";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { Jwk } from "../utils/Types";
 jest.mock("crypto");
 jest.mock("@aws-sdk/client-kms");
-
-//
-// const generateKeyPairSync = require("node:crypto").generateKeyPairSync;
-
-// const nodeCrypto = await import('node:crypto');
-// const awsSdkClientMock = await import("aws-sdk-client-mock").mockClient;
-// const mockClient = await awsSdkClientMock.mockClient;
-
 jest.mock("@aws-lambda-powertools/logger", () => ({
     Logger: jest.fn().mockImplementation(() => ({
         info: jest.fn(),
@@ -27,37 +15,38 @@ jest.mock("@aws-lambda-powertools/logger", () => ({
     })),
 }));
 
+const keyID = "1234-56789-KeyId";
+const mockedHashedKid = "2f572216be9732645402b591d4bebbc2fc6f10749d73fc22aaec1fa2f11fbc08";
+const bucketName = "test_bucket_name";
+
+const mockPublicKey = {
+    kty: "RSA",
+    n: "nnnnnnnnnnnnnnnnnnnnnnnnnn",
+    e: "AQAB",
+};
+
 jest.mock("crypto", () => ({
-    // ...jest.requireActual("crypto"),
     createPublicKey: () => {
         return {
-            export: () => "123456",
+            export: () => {
+                return mockPublicKey; // Mock
+            },
         };
     },
     createHash: () => {
         return {
             update: () => {
                 return {
-                    digest: () => "hashedKid",
+                    digest: () => mockedHashedKid,
                 };
             },
         };
     },
 }));
 
-const keyID = "1234-56789-KeyId";
-
-// const {
-//     S3Client,
-//     PutObjectCommand,
-// } = require("@aws-sdk/client-s3");
-// const {KMSClient} = require("@aws-sdk/client-kms");
-
-describe("PublishKeyHandler", () => {
+describe("Tests", () => {
     const s3Mock = mockClient(S3Client);
 
-    //     KMS.getPublicKey.mockReturnValue("test");
-    //     const kmsMock = mockClient(KMSClient);
     const mockKmsClient = {
         getPublicKey: () => {
             return {
@@ -73,92 +62,21 @@ describe("PublishKeyHandler", () => {
                 KeySpec: "RSA_2048",
                 KeyUsage: "ENCRYPT_DECRYPT",
                 PublicKey: {
-                    "0": 48,
+                    "0": 48, // Mocked buffer
                 },
             };
         },
     } as unknown as AWS.KMS;
-
-    // crypto.createPublicKey.mockReturnValue("");
-    // crypto.export.mockImplementation(() => ({
-    //     test: "json"
-    // });
-
-    // type PublicKeyInput = string | Buffer | KeyObject | JsonWebKey; // Define your input type
-    //
-    // const mockCreatePublicKey = jest.fn((publicKeyData: PublicKeyInput) => ({
-    //   export: jest.fn(() => Promise.resolve("mocked-public-key-data")),
-    //   verify: jest.fn(() => Promise.resolve(true)),
-    // }));
-    // crypto.mockImplementation(() => ({
-    //     createPublicKey: jest.fn(),
-    //     export: jest.fn()
-    // });
-
-    // jest.mock("@aws-sdk/client-kms", () => ({
-    //     KMS: jest.fn().mockImplementation(() => ({
-    //         getPublicKey: jest.fn().mockReturnValue(() => ({
-    //             }) ,
-    //     })),
-    // }));
-
-    const bucketName = "test_bucket_name";
-    const hashedKeyID = "2f572216be9732645402b591d4bebbc2fc6f10749d73fc22aaec1fa2f11fbc08";
-
-    // const { publicKey } = generateKeyPairSync("rsa", {
-    //   modulusLength: 2048,
-    //   publicKeyEncoding: {
-    //     type: "spki",
-    //     format: "der",
-    //   },
-    //   //         privateKeyEncoding : {
-    //   //             type: "pkcs8"
-    //   //         }
-    // } as RSAKeyPairOptions<"der", "der">);
-
-    // const expectedJwk : Jwk =  keys: [
-    //                            					{
-    //                            						alg: "RSA_OAEP_256",
-    //                            						kid: hashedKeyID,
-    //                            						kty: "RSA",
-    //                            						use: "enc",
-    //                            						n: expect.any(String),
-    //                            						e: "AQAB",
-    //                            					}] as Jwk;
-
-    //     const expectedJwk = {
-    //         "keys": [
-    //             {
-    //                 "kty": "RSA",
-    //                 "n": expect.any(String),
-    //                 "e": "AQAB",
-    //                 "use:": "enc",
-    //                 "kid": hashedKeyID,
-    //                 "alg": "RSA_OAEP_256"
-    //
-    //
-    //             }
-    //         ]
-    //     };
 
     beforeEach(() => {
         s3Mock.reset();
     });
 
     describe("#handler", () => {
-        //         it("throws error if environment variables are missing", async () => {
-        //             const handlerClass = new PublishKeyHandler("NOT_SET", bucketName);
-        //
-        //             await expect(handlerClass.handler()).rejects.toThrow(expect.objectContaining({
-        //                 message: "Unable to create JWKS file: Service incorrectly configured",
-        //             }));
-        //             expect(logger.error).toHaveBeenCalledWith({message: "Environment variable DECRYPTION_KEY_ID or JWKS_BUCKET_NAME is not configured"});
-        //         });
-
         it("uploads keys to s3", async () => {
-            const handlerClass: PublishKeyHandler = new PublishKeyHandler(keyID, bucketName, mockKmsClient);
+            const publishKeyHandler: PublishKeyHandler = new PublishKeyHandler("test", bucketName, mockKmsClient);
 
-            const result: string | void | Error = await handlerClass.handler();
+            const result: string | void | Error = await publishKeyHandler.handler();
 
             console.log("result", result);
 
@@ -174,33 +92,35 @@ describe("PublishKeyHandler", () => {
             //                 })
             //                 .export({format: "jwk"});
 
-            //             const expectedJwk = {
-            //                 ...expectedPublicKey,
-            //                 use: "enc",
-            //                 kid: hashedKeyID,
-            //                 alg: "RSA_OAEP_256",
-            //             } as unknown as Jwk;
+            const expectedJwk = {
+                ...mockPublicKey,
+                use: "enc",
+                kid: mockedHashedKid,
+                alg: "RSA_OAEP_256",
+            } as unknown as Jwk;
 
-            //             const getPublicKey = jest.fn().mockReturnValue({
-            //                    CustomerMasterKeySpec: "RSA_2048",
-            //                    KeySpec: "RSA_2048",
-            //                    EncryptionAlgorithms: ["RSAES_OAEP_SHA_256"],
-            //                    KeyId: keyID,
-            //                    KeyUsage: "ENCRYPT_DECRYPT",
-            //                    PublicKey: expectedPublicKey,
-            //                });
+            expect(s3Mock).toHaveReceivedNthCommandWith(1, PutObjectCommand, {
+                Bucket: bucketName,
+                Key: "jwks.json",
+                Body: JSON.stringify({
+                    keys: [expectedJwk],
+                }),
+                ContentType: "application/json",
+            });
+        });
+    });
 
-            //             expect(s3Mock).toHaveReceivedNthCommandWith(1, PutObjectCommand,
-            //                 {
-            //                     Bucket: bucketName,
-            //                     Key: "jwks.json",
-            //                     Body: JSON.stringify({
-            //                         "keys": [
-            //                             expectedJwk,
-            //                         ]
-            //                     }),
-            //                     ContentType: "application/json"
-            //                 });
+    describe("#handler", () => {
+        it("throws error if environment variables are missing", () => {
+            // const handlerClass: PublishKeyHandler = new PublishKeyHandler(keyID, bucketName, mockKmsClient);
+
+            expect(() => {
+              new PublishKeyHandler(undefined, bucketName, mockKmsClient);
+            }).toThrow();
+
+            // expect(logger.error).toHaveBeenCalledWith({
+            //     message: "Environment variable DECRYPTION_KEY_ID or JWKS_BUCKET_NAME is not configured",
+            // });
         });
     });
 

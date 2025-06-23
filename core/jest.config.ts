@@ -3,7 +3,7 @@ import type { Config } from "jest";
 export default {
   preset: "ts-jest",
   clearMocks: true,
-  // modulePaths: ["<rootDir>/**/src"],
+  modulePaths: ["<rootDir>/**/src"],
   collectCoverageFrom: ["<rootDir>/**/src/**/*"],
   coveragePathIgnorePatterns: ["<rootDir>/**/tests/jest.custom.ts"],
   testMatch: ["<rootDir>/**/tests/**/*.test.ts"],

@@ -16,12 +16,26 @@ export class PublishKeyHandler implements LambdaInterface {
     bucketName: string;
     kmsClient: any;
 
-    constructor(decryptionKeyID: string, bucketName: string, kmsClient: any) {
-        this.decryptionKeyID = decryptionKeyID;
+    constructor(decryptionKeyID1: string | undefined, bucketName: string | undefined, kmsClient: any | undefined) {
+
+      // decryptionKeyID1 = "test1234";
+      console.log("DECRYPTION_KEY_ID at end of constructor = " + decryptionKeyID1);
+      console.log(`JWKS_BUCKET_NAME at end of constructor = ${bucketName}`);
+
+        if (!decryptionKeyID1) {
+            throw new Error("Key ID is missing");
+        }
+        this.decryptionKeyID = decryptionKeyID1;
+
+        if (!bucketName) {
+            throw new Error("bucketName is missing");
+        }
         this.bucketName = bucketName;
+
+        if (!kmsClient) {
+            throw new Error("kmsClient is missing");
+        }
         this.kmsClient = kmsClient;
-        console.log(`DECRYPTION_KEY_ID at end of constructor = ${this.decryptionKeyID}`);
-        console.log(`JWKS_BUCKET_NAME at end of constructor = ${this.bucketName}`);
     }
 
     readonly s3Client = new S3Client({
@@ -131,7 +145,7 @@ export class PublishKeyHandler implements LambdaInterface {
     }
 }
 
-const DECRYPTION_KEY_ID: string = process.env.DECRYPTION_KEY_ID ?? "NOT_SET";
+const DECRYPTION_KEY_ID: string | undefined = process.env.DECRYPTION_KEY_ID;
 const JWKS_BUCKET_NAME: string = process.env.JWKS_BUCKET_NAME ?? "NOT_SET";
 const KMS_CLIENT = new KMS({
     region: process.env.REGION,
