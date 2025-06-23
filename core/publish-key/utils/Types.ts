@@ -1,15 +1,14 @@
-
 export interface JWKSBody {
-	keys: Jwk[];
+    keys: Jwk[];
 }
 
 export interface Jwks {
-	keys: Jwk[];
+    keys: Jwk[];
 }
 
 export interface Jwk extends JsonWebKey {
-	alg: string;
-	kid: string;
-	kty: "RSA";
-	use: "enc";
+    alg: string;
+    kid: string;
+    kty: "RSA";
+    use: "enc";
 }
