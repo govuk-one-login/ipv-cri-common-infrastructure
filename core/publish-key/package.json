@@ -2,7 +2,7 @@
   "name": "publish-key",
   "description": "",
   "scripts": {
-    "lint": "-c eslint.config.mjs *.ts .",
+    "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "unit": "jest --verbose",
     "test": "npm run unit --",

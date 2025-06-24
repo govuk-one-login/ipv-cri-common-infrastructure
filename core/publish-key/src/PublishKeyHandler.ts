@@ -1,4 +1,5 @@
 import { LambdaInterface } from "@aws-lambda-powertools/commons/types";
+import { Context } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Jwk, JWKSBody } from "../utils/Types";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
@@ -6,10 +7,7 @@ import { NodeHttpHandler } from "@smithy/node-http-handler";
 import crypto from "crypto";
 import { KMS } from "@aws-sdk/client-kms";
 
-const POWERTOOLS_LOG_LEVEL : string = process.env.POWERTOOLS_LOG_LEVEL ?? "INFO";
 export const logger = new Logger({ serviceName: "PublishKeyHandler" });
-
-// REMEMBER TO CHANGE BACK FROM HARDCODED "INFO"!!!!!!!!!!!
 
 export class PublishKeyHandler implements LambdaInterface {
     decryptionKeyID: string;
@@ -17,11 +15,6 @@ export class PublishKeyHandler implements LambdaInterface {
     kmsClient: KMS;
 
     constructor(decryptionKeyID1: string | undefined, bucketName: string | undefined, kmsClient: any | undefined) {
-
-      // decryptionKeyID1 = "test1234";
-      console.log("DECRYPTION_KEY_ID at end of constructor = " + decryptionKeyID1);
-      console.log(`JWKS_BUCKET_NAME at end of constructor = ${bucketName}`);
-
         if (!decryptionKeyID1) {
             throw new Error("Key ID is missing");
         }
@@ -40,60 +33,41 @@ export class PublishKeyHandler implements LambdaInterface {
 
     readonly s3Client = new S3Client({
         region: process.env.REGION,
-        maxAttempts: 2,
+        maxAttempts: 5,
         requestHandler: new NodeHttpHandler({
-            connectionTimeout: 29000,
-            socketTimeout: 29000,
+            connectionTimeout: 5000,
+            requestTimeout: 5000,
         }),
     });
 
-    public async handler(): Promise<string | undefined> {
+    public async handler(event: Record<string, unknown>, context: Context): Promise<string | undefined> {
         try {
-            logger.info(`DECRYPTION_KEY_ID = ${this.decryptionKeyID}`);
-            logger.info(`JWKS_BUCKET_NAME = ${this.bucketName}`);
-            console.log(`DECRYPTION_KEY_ID in handler = ${this.decryptionKeyID}`);
-            console.log(`JWKS_BUCKET_NAME in handler = ${this.bucketName}`);
+            logger.info(`Initiating lambda ${context.functionName} version ${context.functionVersion}`);
 
-            if (this.decryptionKeyID === "NOT_SET" || this.bucketName === "NOT_SET") {
-                logger.error({
-                    message: "Environment variable DECRYPTION_KEY_ID or JWKS_BUCKET_NAME is not configured",
-                });
-                console.log("Environment variable DECRYPTION_KEY_ID or JWKS_BUCKET_NAME is not configured");
-                throw new Error("Service incorrectly configured");
-            }
+            logger.debug(`Using key ${this.decryptionKeyID} and uploading to ${this.bucketName}`);
 
-            const body: JWKSBody = { keys: [] };
-
-            logger.info({
-                message: "Building wellknown JWK endpoint with key " + this.decryptionKeyID,
-            });
-            console.log("Building wellknown JWK endpoint with key " + this.decryptionKeyID);
+            const jwksBody: JWKSBody = { keys: [] };
 
             const decryptionJwk: Jwk | null = await this.getAsJwk(this.decryptionKeyID);
+            logger.info("Successfully obtained kmsKey as jwk");
 
             if (decryptionJwk) {
-                body.keys.push(decryptionJwk);
+                jwksBody.keys.push(decryptionJwk);
 
                 const uploadParams = {
                     Bucket: this.bucketName,
                     Key: "jwks.json",
-                    Body: JSON.stringify(body),
+                    Body: JSON.stringify(jwksBody),
                     ContentType: "application/json",
                 };
+                logger.debug(`uploadParams = ${JSON.stringify(uploadParams)}`);
 
-                logger.info(`uploadParams = ${JSON.stringify(uploadParams)}`);
-                console.log(`uploadParams = ${JSON.stringify(uploadParams)}`);
+                await this.s3Client.send(new PutObjectCommand(uploadParams));
+                logger.debug(`jwksBody = ${JSON.stringify(jwksBody)}`);
 
-                try {
-                    await this.s3Client.send(new PutObjectCommand(uploadParams));
-                } catch (err) {
-                    logger.error({ message: "Error writing keys to S3 bucket" + err });
-                    throw new Error("Error writing keys to S3 bucket");
-                }
-                logger.info(`body = ${JSON.stringify(body)}`);
-                console.log(`body = ${JSON.stringify(body)}`);
-                return JSON.stringify(body);
-                // return okay message - status 200
+                logger.info("Successfully Uploaded jwks.json to bucket");
+
+                return "Success";
             }
         } catch (error) {
             if (error instanceof Error) {
@@ -106,18 +80,18 @@ export class PublishKeyHandler implements LambdaInterface {
 
     async getAsJwk(keyId: string): Promise<Jwk | null> {
         let kmsKey;
+
         try {
             kmsKey = await this.kmsClient.getPublicKey({ KeyId: keyId });
-            console.log("successfully obtained kmsKey = " + JSON.stringify(kmsKey));
         } catch (error) {
-            console.log("In kms catch block");
-            logger.warn({ message: "Failed to fetch key from KMS" }, { error });
-            console.log("Failed to fetch key from KMS" + error);
-            throw new Error(`Failed to fetch key from KMS: ${JSON.stringify(error)}`);
+            if (error instanceof Error) {
+                throw new Error(`Failed to fetch key from KMS: ${error.message}`);
+            } else {
+                throw new Error(`Failed to fetch key from KMS: ${JSON.stringify(error)}`);
+            }
         }
 
-        if (kmsKey != null && kmsKey.KeySpec != null && kmsKey.KeyId != null && kmsKey.PublicKey != null) {
-            console.log("in kms null is NOT NULL thing");
+        if (this.keyPresentAndValid(kmsKey)) {
             const publicKey = crypto
                 .createPublicKey({
                     key: kmsKey.PublicKey as Buffer,
@@ -125,8 +99,9 @@ export class PublishKeyHandler implements LambdaInterface {
                     format: "der",
                 })
                 .export({ format: "jwk" });
-            console.log(`!!!!!!!!!!!!!!!PUBLIC KEY = ${publicKey}`);
+
             const hashedKeyId: string = this.getHashedKid(keyId);
+
             return {
                 ...publicKey,
                 use: "enc",
@@ -134,10 +109,16 @@ export class PublishKeyHandler implements LambdaInterface {
                 alg: "RSA_OAEP_256",
             } as unknown as Jwk;
         }
-        logger.error({
-            message: "Failed to build JWK from key " + keyId + " due to incomplete key obtained from KMS",
-        });
+
         throw new Error("Failed to build JWK from key due to incomplete key obtained from KMS");
+    }
+
+    keyPresentAndValid(kmsKey: any): boolean {
+        if (!kmsKey) {
+            return false;
+        }
+
+        return kmsKey.KeySpec && kmsKey.KeyId && kmsKey.PublicKey;
     }
 
     getHashedKid(kmsKeyId: string): string {
@@ -145,8 +126,8 @@ export class PublishKeyHandler implements LambdaInterface {
     }
 }
 
-const DECRYPTION_KEY_ID: string = process.env.DECRYPTION_KEY_ID ?? "NOT_SET";
-const JWKS_BUCKET_NAME: string = process.env.JWKS_BUCKET_NAME ?? "NOT_SET";
+const DECRYPTION_KEY_ID: string | undefined = process.env.DECRYPTION_KEY_ID;
+const JWKS_BUCKET_NAME: string | undefined = process.env.JWKS_BUCKET_NAME;
 const KMS_CLIENT = new KMS({
     region: process.env.REGION,
 });

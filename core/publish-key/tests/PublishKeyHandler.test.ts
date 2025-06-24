@@ -1,22 +1,35 @@
 import { PublishKeyHandler, logger } from "../src/PublishKeyHandler";
+
 import { expect, jest } from "@jest/globals";
+
 import { mockClient } from "aws-sdk-client-mock";
+
 import "aws-sdk-client-mock-jest";
+
 import * as AWS from "@aws-sdk/client-kms";
+
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+
 import { Jwk } from "../utils/Types";
+
+import { Context } from "aws-lambda";
+
 jest.mock("crypto");
+
 jest.mock("@aws-sdk/client-kms");
+
 jest.mock("@aws-lambda-powertools/logger", () => ({
     Logger: jest.fn().mockImplementation(() => ({
-        info: jest.fn(),
-        error: jest.fn(),
-        warn: jest.fn(),
+        info: (x: any) => console.log(x),
+        error: (x: any) => console.log(x),
+        warn: (x: any) => console.log(x),
     })),
 }));
 
 const keyID = "1234-56789-KeyId";
+
 const mockedHashedKid = "2f572216be9732645402b591d4bebbc2fc6f10749d73fc22aaec1fa2f11fbc08";
+
 const bucketName = "test_bucket_name";
 
 const mockPublicKey = {
@@ -72,47 +85,54 @@ describe("Tests", () => {
         s3Mock.reset();
     });
 
-    describe("#handler", () => {
-        it("uploads keys to s3", async () => {
-            const publishKeyHandler: PublishKeyHandler = new PublishKeyHandler("test", bucketName, mockKmsClient);
-
-            const result: string | void | Error = await publishKeyHandler.handler();
-
-            console.log("result", result);
-
-            expect(logger.info).toHaveBeenCalledWith({
-                message: "Building wellknown JWK endpoint with key " + [keyID],
-            });
-
+    describe("#handler happy path", () => {
+        it("Should upload keys to s3", async () => {
             const expectedJwk = {
                 ...mockPublicKey,
                 use: "enc",
                 kid: mockedHashedKid,
-                alg: "RSA_OAEP_256"
+                alg: "RSA_OAEP_256",
             } as unknown as Jwk;
+
+            const expectedJWKSet = {
+                keys: [expectedJwk],
+            };
+
+            const publishKeyHandler: PublishKeyHandler = new PublishKeyHandler(keyID, bucketName, mockKmsClient);
+
+            const result: string | undefined = await publishKeyHandler.handler(
+                {} as Record<string, unknown>,
+                { functionName: "test", functionVersion: "1" } as Context,
+            );
+
+            expect(result).toEqual("Success");
 
             expect(s3Mock).toHaveReceivedNthCommandWith(1, PutObjectCommand, {
                 Bucket: bucketName,
                 Key: "jwks.json",
-                Body: JSON.stringify({
-                    keys: [expectedJwk],
-                }),
+                Body: JSON.stringify(expectedJWKSet),
                 ContentType: "application/json",
             });
         });
     });
 
-    describe("#handler", () => {
-        it("throws error if environment variables are missing", () => {
-            // const handlerClass: PublishKeyHandler = new PublishKeyHandler(keyID, bucketName, mockKmsClient);
-
+    describe("#handler env variables not set", () => {
+        it("throws error if Key ID variable is missing", () => {
             expect(() => {
-               new PublishKeyHandler(undefined, bucketName, mockKmsClient);
-            }).toThrow();
+                new PublishKeyHandler(undefined, bucketName, mockKmsClient);
+            }).toThrow("Key ID is missing");
+        });
 
-            // expect(logger.error).toHaveBeenCalledWith({
-            //     message: "Environment variable DECRYPTION_KEY_ID or JWKS_BUCKET_NAME is not configured",
-            // });
+        it("throws error if bucketName variable is missing", () => {
+            expect(() => {
+                new PublishKeyHandler(keyID, undefined, mockKmsClient);
+            }).toThrow("bucketName is missing");
+        });
+
+        it("throws error if kmsClient variable is missing", () => {
+            expect(() => {
+                new PublishKeyHandler(keyID, bucketName, undefined);
+            }).toThrow("kmsClient is missing");
         });
     });
 
