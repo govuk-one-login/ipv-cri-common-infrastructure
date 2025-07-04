@@ -66,3 +66,7 @@ Frontend test dev:
 
 **important:** One you've cloned the repo, run `pre-commit install` to install the pre-commit hooks.
 If you have not installed `pre-commit` then please do so [here](https://pre-commit.com/).
+
+## PublishKey Lambda
+**PLEASE NOTE:** THIS LAMBDA WILL OVERWRITE EVERYTHING IN THE JWKS.JSON FILE. It does not append the current decryption key details.  
+
