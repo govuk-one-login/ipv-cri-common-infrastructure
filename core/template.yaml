@@ -13,6 +13,15 @@ Metadata:
 
 ### AWS Region is set on deployment so no need to provide an environment value here
 Parameters:
+  BuildNotificationStackName:
+    Description: The topic to send key rotation bucket access notifications to
+    Type: String
+    Default: "none"
+  CodeSigningConfigArn:
+    Type: String
+    Description: >
+      The ARN of the Code Signing Config to use, provided by the deployment pipeline
+    Default: "none"
   Environment:
     Type: String
     Default: "local"
@@ -23,22 +32,18 @@ Parameters:
       - "staging"
       - "integration"
       - "production"
-  ServiceName:
-    Type: String
-    Default: "none"
-  VpcStackName:
-    Description: VPC Stack name
-    Type: String
-    Default: "none"
-  CodeSigningConfigArn:
-    Type: String
-    Description: >
-      The ARN of the Code Signing Config to use, provided by the deployment pipeline
-    Default: "none"
   PermissionsBoundary:
     Type: String
     Description: >
       The ARN of the permissions boundary to apply to any role created by the template
+    Default: "none"
+  ServiceName:
+    Type: String
+    Description: Provide a service name to enable naming convention patterns e.g. address, f2f, passport
+    Default: "none"
+  VpcStackName:
+    Description: VPC Stack name
+    Type: String
     Default: "none"
   
 Conditions:
@@ -395,6 +400,181 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-${PublishKeyFunction}"
       RetentionInDays: 30
+
+  PublishedKeysS3BucketLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: IsNotDevOrLocal   
+    Properties:
+      LogGroupName: !Join
+        - "-"
+        - - !Ref PublishedKeysS3Bucket
+          - "logs"
+      RetentionInDays: 30
+
+  PublishedKeysLogsBucket:
+    Type: AWS::S3::Bucket
+    Condition: IsNotDevOrLocal   
+    Properties:
+      BucketName: !Join
+        - "-"
+        - - !Ref PublishedKeysS3Bucket
+          - "logs"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+
+  PublishedKeysLogsBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Condition: IsNotDevOrLocal
+    Properties:
+      Bucket: !Ref PublishedKeysLogsBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "s3:GetBucketAcl"
+            Principal:
+              Service: "cloudtrail.amazonaws.com"
+            Resource: !Sub "arn:aws:s3:::${PublishedKeysLogsBucket}"
+          - Effect: Allow
+            Action: "s3:PutObject"
+            Principal:
+              Service: "cloudtrail.amazonaws.com"
+            Resource: !Sub "arn:aws:s3:::${PublishedKeysLogsBucket}/AWSLogs/${AWS::AccountId}/*"
+            Condition:
+              StringEquals:
+                "s3:x-amz-acl": "bucket-owner-full-control"
+          - Effect: Deny
+            Action: "s3:*"
+            Principal: "*"
+            Resource:
+              - !GetAtt PublishedKeysLogsBucket.Arn
+              - !Sub "${PublishedKeysLogsBucket.Arn}/*"
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
+          
+  Trail:
+    DependsOn:
+      - PublishedKeysLogsBucketPolicy
+    Type: AWS::CloudTrail::Trail
+    Condition: IsNotDevOrLocal   
+    Properties:
+      TrailName: !Sub "${Environment}-${AWS::StackName}-cloudtrail"
+      IncludeGlobalServiceEvents: true
+      IsLogging: true
+      IsMultiRegionTrail: false
+      EventSelectors:
+        - DataResources:
+            - Type: AWS::S3::Object
+              Values:
+                - !Join
+                  - ""
+                  - - !GetAtt PublishedKeysS3Bucket.Arn
+                    - "/"
+          IncludeManagementEvents: true
+          ReadWriteType: All
+      S3BucketName: !Ref PublishedKeysLogsBucket
+      EnableLogFileValidation: true
+      CloudWatchLogsLogGroupArn: !GetAtt PublishedKeysS3BucketLogGroup.Arn
+      CloudWatchLogsRoleArn: !GetAtt TrailLogGroupRole.Arn
+
+  TrailLogGroupRole:
+    Type: AWS::IAM::Role
+    Condition: IsNotDevOrLocal   
+    Properties:
+      PermissionsBoundary: !If [ UsePermissionsBoundary, !Ref PermissionsBoundary, !Ref AWS::NoValue ]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "sts:AssumeRole"
+            Principal:
+              Service:
+                - "cloudtrail.amazonaws.com"
+      Policies:
+        - PolicyName: !Sub "${AWS::StackName}-PublishedKeysS3BucketCloudtrailLogGroupRole"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: !GetAtt PublishedKeysS3BucketLogGroup.Arn
+
+  PublishedKeysS3BucketObjectActionsMetricFilter:
+      Type: AWS::Logs::MetricFilter
+      Condition: IsNotDevOrLocal      
+      Properties:
+        LogGroupName: !Ref PublishedKeysS3BucketLogGroup
+        FilterPattern:
+          Fn::Join:
+            - ""
+            - - '{'
+              - '($.eventSource = s3.amazonaws.com) &&'
+              - '($.eventName = DeleteObject || $.eventName = PutObject) &&'
+              - '($.userIdentity.arn != "'
+              - !ImportValue OAuthGenerationFunctionRoleArn
+              - '")'
+              - '}'
+        MetricTransformations:
+          - MetricName: UnauthorisedS3ObjectAction
+            MetricNamespace: PublishedKeysBucket
+            MetricValue: 1
+
+  PublishedKeysS3BucketObjectActionAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: IsNotDevOrLocal
+    Properties:
+      AlarmName: PublishedKeysS3BucketObjectActionAlarm
+      AlarmDescription: !Sub "A role other than the `OAuthGenerationFunctionRole` has attempted to `PutObject` or `DeleteObject` to `${PublishedKeysS3Bucket.Arn}`. Check Cloudwatch for further details."
+      MetricName: UnauthorisedS3ObjectAction
+      Namespace: PublishedKeysBucket
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - Fn::ImportValue: !Sub "${BuildNotificationStackName}-BuildNotificationTopicArn"
+
+  PublishedKeysBucketConfigChangeMetricFilter:
+    Type: 'AWS::Logs::MetricFilter'
+    Condition: IsNotDevOrLocal
+    Properties:
+      LogGroupName: !Ref PublishedKeysS3BucketLogGroup
+      FilterPattern: '{ ($.eventSource = s3.amazonaws.com) && (($.eventName = PutBucketAcl) || ($.eventName = PutBucketPolicy) || ($.eventName = PutBucketCors) || ($.eventName = PutBucketLifecycle) || ($.eventName = PutBucketReplication) || ($.eventName = DeleteBucketPolicy) || ($.eventName = DeleteBucketCors) || ($.eventName = DeleteBucketLifecycle) || ($.eventName = DeleteBucketReplication)) }'
+      MetricTransformations:
+        - MetricName: PublishedKeysBucketConfigChange
+          MetricNamespace: PublishedKeysBucket
+          MetricValue: 1
+
+  PublishedKeysBucketConfigChangeAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: IsNotDevOrLocal
+    Properties:
+      AlarmName: PublishedKeysBucketConfigChangeAlarm
+      AlarmDescription: !Sub "Changes have been made to `${PublishedKeysS3Bucket.Arn}`, for example, a `DeleteBucketPolicy`, `DeleteBucketLifecycle` or `PutBucketCors` event. Check Cloudwatch for further details."
+      MetricName: PublishedKeysBucketConfigChange
+      Namespace: PublishedKeysBucket
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - Fn::ImportValue: !Sub "${BuildNotificationStackName}-BuildNotificationTopicArn"
 
 Outputs:
   TableNameSession1:
