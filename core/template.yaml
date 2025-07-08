@@ -461,7 +461,7 @@ Resources:
             Condition:
               Bool:
                 "aws:SecureTransport": false
-          
+
   Trail:
     DependsOn:
       - PublishedKeysLogsBucketPolicy
@@ -480,7 +480,7 @@ Resources:
                   - ""
                   - - !GetAtt PublishedKeysS3Bucket.Arn
                     - "/"
-          IncludeManagementEvents: true
+          IncludeManagementEvents: false
           ReadWriteType: All
       S3BucketName: !Ref PublishedKeysLogsBucket
       EnableLogFileValidation: true
@@ -535,7 +535,7 @@ Resources:
     Type: AWS::CloudWatch::Alarm
     Condition: IsNotDevOrLocal
     Properties:
-      AlarmName: PublishedKeysS3BucketObjectActionAlarm
+      AlarmName: !Sub ${AWS::StackName}-PublishedKeysS3BucketObjectActionAlarm
       AlarmDescription: !Sub "A role other than the `OAuthGenerationFunctionRole` has attempted to `PutObject` or `DeleteObject` to `${PublishedKeysS3Bucket.Arn}`. Check Cloudwatch for further details."
       MetricName: UnauthorisedS3ObjectAction
       Namespace: PublishedKeysBucket
@@ -563,7 +563,7 @@ Resources:
     Type: AWS::CloudWatch::Alarm
     Condition: IsNotDevOrLocal
     Properties:
-      AlarmName: PublishedKeysBucketConfigChangeAlarm
+      AlarmName: !Sub ${AWS::StackName}-PublishedKeysBucketConfigChangeAlarm
       AlarmDescription: !Sub "Changes have been made to `${PublishedKeysS3Bucket.Arn}`, for example, a `DeleteBucketPolicy`, `DeleteBucketLifecycle` or `PutBucketCors` event. Check Cloudwatch for further details."
       MetricName: PublishedKeysBucketConfigChange
       Namespace: PublishedKeysBucket
