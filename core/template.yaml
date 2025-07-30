@@ -513,7 +513,7 @@ Resources:
 
   PublishedKeysS3BucketObjectActionsMetricFilter:
       Type: AWS::Logs::MetricFilter
-      Condition: IsNotDevOrLocal      
+      # Condition: IsNotDevOrLocal      
       Properties:
         LogGroupName: !Ref PublishedKeysS3BucketLogGroup
         FilterPattern:
@@ -531,7 +531,7 @@ Resources:
 
   PublishedKeysS3BucketObjectActionAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: IsNotDevOrLocal
+    # Condition: IsNotDevOrLocal
     Properties:
       AlarmName: !Sub ${AWS::StackName}-PublishedKeysS3BucketObjectActionAlarm
       AlarmDescription: !Sub "A role other than the `OAuthGenerationFunctionRole` has attempted to `PutObject` or `DeleteObject` to `${PublishedKeysS3Bucket.Arn}`. Check Cloudwatch for further details."
