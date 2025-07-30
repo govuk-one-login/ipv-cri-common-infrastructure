@@ -403,7 +403,7 @@ Resources:
 
   PublishedKeysS3BucketLogGroup:
     Type: AWS::Logs::LogGroup
-    Condition: IsNotDevOrLocal   
+    # Condition: IsNotDevOrLocal   
     Properties:
       LogGroupName: !Join
         - "-"
