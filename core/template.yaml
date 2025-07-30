@@ -413,7 +413,7 @@ Resources:
 
   PublishedKeysLogsBucket:
     Type: AWS::S3::Bucket
-    Condition: IsNotDevOrLocal   
+    # Condition: IsNotDevOrLocal   
     Properties:
       BucketName: !Join
         - "-"
@@ -433,7 +433,7 @@ Resources:
 
   PublishedKeysLogsBucketPolicy:
     Type: 'AWS::S3::BucketPolicy'
-    Condition: IsNotDevOrLocal
+    # Condition: IsNotDevOrLocal
     Properties:
       Bucket: !Ref PublishedKeysLogsBucket
       PolicyDocument:
@@ -466,7 +466,7 @@ Resources:
     DependsOn:
       - PublishedKeysLogsBucketPolicy
     Type: AWS::CloudTrail::Trail
-    Condition: IsNotDevOrLocal   
+    # Condition: IsNotDevOrLocal   
     Properties:
       TrailName: !Sub "${Environment}-${AWS::StackName}-cloudtrail"
       IncludeGlobalServiceEvents: true
@@ -489,7 +489,7 @@ Resources:
 
   TrailLogGroupRole:
     Type: AWS::IAM::Role
-    Condition: IsNotDevOrLocal   
+    # Condition: IsNotDevOrLocal   
     Properties:
       PermissionsBoundary: !If [ UsePermissionsBoundary, !Ref PermissionsBoundary, !Ref AWS::NoValue ]
       AssumeRolePolicyDocument:
