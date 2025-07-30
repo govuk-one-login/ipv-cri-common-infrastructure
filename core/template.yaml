@@ -522,9 +522,7 @@ Resources:
             - - '{'
               - '($.eventSource = s3.amazonaws.com) &&'
               - '($.eventName = DeleteObject || $.eventName = PutObject) &&'
-              - '($.userIdentity.arn != "'
-              - !ImportValue OAuthGenerationFunctionRoleArn
-              - '")'
+              - '($.userIdentity.arn != "*OAuthGenerationFunctionRole*")'
               - '}'
         MetricTransformations:
           - MetricName: UnauthorisedS3ObjectAction
