@@ -2,7 +2,15 @@
 
 This repository is the home for common CRI supporting Cloud Formation infrastructure which is shared or sensitive. The code in this repository is deployed and promoted through the environments using GitHub actions and the dev platform team implementation. If you are making changes to this repo please update [RELEASE_NOTES](./RELEASE_NOTES.md) so that teams can check for changes before re-deploying.
 
-The automated deployments are triggered on a push to main after PR approval. GitHub secrets are required for deployment.
+## How to deploy changes to each service
+
+Whenever there is a change merged to main after PR approval, [Package core infrastructure](./.github/workflows/post-merge-publish-core-infrastructure.yaml), [Package txma infrastructure](./.github/workflows/post-merge-publish-txma-infrastructure.yaml) and [Kiwi - Package core infrastructure](./.github/workflows/kiwi-post-merge-publish-core-infrastructure.yaml) workflows run. These workflows deploy core and txma stacks into all CRI services.
+
+The stacks are only deployed if for example vars.BAV_DEV_ENABLED is set to true in [GitHub actions variables](https://github.com/govuk-one-login/ipv-cri-common-infrastructure/settings/variables/actions). Only admins have access to the settings and can change the variables.
+
+To deploy a change to a specific service which has been merged to main, update the GitHub actions variable for the specific service you want the change to be deployed to, and then run the [Package core infrastructure](https://github.com/govuk-one-login/ipv-cri-common-infrastructure/actions/workflows/post-merge-publish-core-infrastructure.yaml),  [Package txma infrastructure](https://github.com/govuk-one-login/ipv-cri-common-infrastructure/actions/workflows/post-merge-publish-txma-infrastructure.yaml) or [Kiwi - Package core infrastructure](https://github.com/govuk-one-login/ipv-cri-common-infrastructure/actions/workflows/kiwi-post-merge-publish-core-infrastructure.yaml) workflow in GitHub Actions.
+
+GitHub secrets are required for deployment.
 
 ## Required GitHub secrets:
 
