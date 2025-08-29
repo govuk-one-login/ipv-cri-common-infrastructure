@@ -46,7 +46,7 @@ const validJwk: Jwk = {
     ...mockPublicKey,
     use: "enc",
     kid: mockedHashedKid,
-    alg: "RSA_OAEP_256",
+    alg: "RSA-OAEP-256",
     kty: "RSA",
 };
 const validContext = { functionName: "test", functionVersion: "1" } as Context;

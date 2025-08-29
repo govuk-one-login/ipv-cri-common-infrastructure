@@ -107,7 +107,7 @@ export class PublishKeyHandler implements LambdaInterface {
             ...publicKey,
             use: "enc",
             kid: crypto.createHash("sha256").update(this.decryptionKeyID).digest().toString("hex"),
-            alg: "RSA_OAEP_256",
+            alg: "RSA-OAEP-256",
         } as Jwk;
     }
 
