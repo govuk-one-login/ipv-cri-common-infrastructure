@@ -45,7 +45,7 @@ Parameters:
     Description: VPC Stack name
     Type: String
     Default: "none"
-
+  
 Conditions:
   IsDev: !Equals [!Ref Environment, dev]
   IsLocal: !Equals [!Ref Environment, local]
@@ -112,6 +112,45 @@ Resources:
           Value: "true"
         - Key: "awsStackName"
           Value: !Sub "${AWS::StackName}"
+
+  SessionTable1:
+    Type: "AWS::DynamoDB::Table"
+    Properties:
+      TableName: !Sub "${AWS::StackName}-session1"
+      BillingMode: "PAY_PER_REQUEST"
+      AttributeDefinitions:
+        - AttributeName: "sessionId"
+          AttributeType: "S"
+        - AttributeName: "authorizationCode"
+          AttributeType: "S"
+        - AttributeName: "accessToken"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "sessionId"
+          KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: "authorizationCode-index"
+          KeySchema:
+            - AttributeName: "authorizationCode"
+              KeyType: "HASH"
+          Projection:
+            NonKeyAttributes:
+              - "sessionId"
+              - "redirectUri"
+              - "clientId"
+            ProjectionType: "INCLUDE"
+        - IndexName: "access-token-index"
+          KeySchema:
+            - AttributeName: "accessToken"
+              KeyType: "HASH"
+          Projection:
+            NonKeyAttributes:
+              - "sessionId"
+              - "subject"
+            ProjectionType: "INCLUDE"
+      TimeToLiveSpecification:
+        AttributeName: expiry-date
+        Enabled: true
 
   ApiKey1:
     Type: AWS::ApiGateway::ApiKey
@@ -364,7 +403,7 @@ Resources:
 
   PublishedKeysS3BucketLogGroup:
     Type: AWS::Logs::LogGroup
-    Condition: IsNotDevOrLocal
+    Condition: IsNotDevOrLocal   
     Properties:
       LogGroupName: !Join
         - "-"
@@ -374,7 +413,7 @@ Resources:
 
   PublishedKeysLogsBucket:
     Type: AWS::S3::Bucket
-    Condition: IsNotDevOrLocal
+    Condition: IsNotDevOrLocal   
     Properties:
       BucketName: !Join
         - "-"
@@ -427,7 +466,7 @@ Resources:
     DependsOn:
       - PublishedKeysLogsBucketPolicy
     Type: AWS::CloudTrail::Trail
-    Condition: IsNotDevOrLocal
+    Condition: IsNotDevOrLocal   
     Properties:
       TrailName: !Sub "${Environment}-${AWS::StackName}-cloudtrail"
       IncludeGlobalServiceEvents: true
@@ -450,7 +489,7 @@ Resources:
 
   TrailLogGroupRole:
     Type: AWS::IAM::Role
-    Condition: IsNotDevOrLocal
+    Condition: IsNotDevOrLocal   
     Properties:
       PermissionsBoundary: !If [ UsePermissionsBoundary, !Ref PermissionsBoundary, !Ref AWS::NoValue ]
       AssumeRolePolicyDocument:
@@ -474,7 +513,7 @@ Resources:
 
   PublishedKeysS3BucketObjectActionsMetricFilter:
       Type: AWS::Logs::MetricFilter
-      Condition: IsNotDevOrLocal
+      Condition: IsNotDevOrLocal      
       Properties:
         LogGroupName: !Ref PublishedKeysS3BucketLogGroup
         FilterPattern:
@@ -536,6 +575,11 @@ Resources:
         - Fn::ImportValue: !Sub "${BuildNotificationStackName}-BuildNotificationTopicArn"
 
 Outputs:
+  TableNameSession1:
+    Description: "DynamoDB Session Table Name"
+    Value: !Ref SessionTable1
+    Export:
+      Name: !Sub ${AWS::StackName}-TableNameSession1
 
   CriVcSigningKey1Id:
     Description: "CRI KMS Signing Key 1 Id"
