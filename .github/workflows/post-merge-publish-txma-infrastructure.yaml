@@ -6,7 +6,7 @@ on:
     paths:
       - "txma/**"
 
-  workflow_dispatch: # deploy manually
+  workflow_dispatch: #deploy manually
 
 jobs:
   publish_txma_to_matrix_dev:
