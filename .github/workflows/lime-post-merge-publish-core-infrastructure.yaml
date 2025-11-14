@@ -63,4 +63,4 @@ jobs:
             working-directory: ./out
       - name: Inform of disabled status
         if: matrix.ENABLED != 'true'
-        run: echo ":large_orange_diamond: Set repository variable ${{ matrix.target }}_ENABLED to 'true' to enable  :large_orange_diamond:" >> $GITHUB_STEP_SUMMARY
+        run: echo "🔶 Set repository variable ${{ matrix.target }}_ENABLED to 'true' to enable	🔶" >> $GITHUB_STEP_SUMMARY
