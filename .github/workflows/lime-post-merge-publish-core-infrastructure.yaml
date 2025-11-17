@@ -1,4 +1,4 @@
-name: Lime - Package core infrastructure
+name: Lime - Package core infrastructure test
 on:
   push:
     branches:
