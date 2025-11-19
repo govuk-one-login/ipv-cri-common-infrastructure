@@ -79,14 +79,6 @@ jobs:
         with:
           version: 1.74.0
 
-      - name: Debug role ARN
-        if: matrix.ENABLED == 'true'
-        run: |
-          echo "Target: ${{ matrix.target }}"
-          echo "Role ARN VAR: ${{ matrix.GH_ACTIONS_ROLE_ARN_VAR }}"
-          echo "Role ARN SECRET: ${{ matrix.GH_ACTIONS_ROLE_ARN_SECRET }}"
-          echo "Resolved Role: ${{ matrix.GH_ACTIONS_ROLE_ARN_VAR && vars[matrix.GH_ACTIONS_ROLE_ARN_VAR] || secrets[matrix.GH_ACTIONS_ROLE_ARN_SECRET] }}"
-
       - name: Assume temporary AWS role
         if: matrix.ENABLED == 'true'
         uses: aws-actions/configure-aws-credentials@v4
