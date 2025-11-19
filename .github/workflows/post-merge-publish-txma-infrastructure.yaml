@@ -83,7 +83,6 @@ jobs:
         with:
           role-to-assume: ${{ matrix.GH_ACTIONS_ROLE_ARN_VAR && vars[matrix.GH_ACTIONS_ROLE_ARN_VAR] || secrets[matrix.GH_ACTIONS_ROLE_ARN_SECRET] }}
           aws-region: ${{ env.AWS_REGION }}
-          audience: sts.amazonaws.com
 
       - name: SAM Validate
         if: matrix.ENABLED == 'true'
