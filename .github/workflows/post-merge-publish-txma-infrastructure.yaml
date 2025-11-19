@@ -51,9 +51,11 @@ jobs:
             ENABLED: "${{ vars.OB_DEV_ENABLED }}"
             ARTIFACT_SOURCE_BUCKET_NAME_VAR: OB_DEV_TXMA_ARTIFACT_SOURCE_BUCKET_NAME
             GH_ACTIONS_ROLE_ARN_VAR: OB_DEV_TXMA_GH_ACTIONS_ROLE_ARN
+            ENVIRONMENT: OB_DEV
 
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment: ${{ matrix.ENVIRONMENT }}
     env:
       AWS_REGION: eu-west-2
     permissions:
