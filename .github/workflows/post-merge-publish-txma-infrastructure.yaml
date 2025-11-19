@@ -13,7 +13,7 @@ jobs:
     name: Publish txma to ${{ matrix.target }} dev
     strategy:
       matrix:
-        target: [ ADDRESS_DEV, COMMON_DEV, DL_DEV, FRAUD_DEV, HMRC_CHECK_DEV, HMRC_KBV_DEV, KBV_DEV, PASSPORT_DEV ]
+        target: [ ADDRESS_DEV, COMMON_DEV, DL_DEV, FRAUD_DEV, HMRC_CHECK_DEV, HMRC_KBV_DEV, KBV_DEV, PASSPORT_DEV, OB_DEV ]
         include:
           - target: ADDRESS_DEV
             ENABLED: "${{ vars.ADDRESS_DEV_ENABLED }}"
@@ -83,6 +83,7 @@ jobs:
         with:
           role-to-assume: ${{ matrix.GH_ACTIONS_ROLE_ARN_VAR && vars[matrix.GH_ACTIONS_ROLE_ARN_VAR] || secrets[matrix.GH_ACTIONS_ROLE_ARN_SECRET] }}
           aws-region: ${{ env.AWS_REGION }}
+          audience: sts.amazonaws.com
 
       - name: SAM Validate
         if: matrix.ENABLED == 'true'
