@@ -49,8 +49,8 @@ jobs:
             GH_ACTIONS_ROLE_ARN_SECRET: PASSPORTA_DEV_TXMA_GH_ACTIONS_ROLE_ARN
           - target: OB_DEV
             ENABLED: "${{ vars.OB_DEV_ENABLED }}"
-            ARTIFACT_SOURCE_BUCKET_NAME_SECRET: OB_DEV_TXMA_ARTIFACT_SOURCE_BUCKET_NAME # pragma: allowlist secret
-            GH_ACTIONS_ROLE_ARN_SECRET: OB_DEV_TXMA_GH_ACTIONS_ROLE_ARN # pragma: allowlist secret
+            ARTIFACT_SOURCE_BUCKET_NAME_VAR: OB_DEV_TXMA_ARTIFACT_SOURCE_BUCKET_NAME
+            GH_ACTIONS_ROLE_ARN_VAR: OB_DEV_TXMA_GH_ACTIONS_ROLE_ARN
 
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -81,7 +81,7 @@ jobs:
         if: matrix.ENABLED == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets[matrix.GH_ACTIONS_ROLE_ARN_SECRET] }}
+          role-to-assume: ${{ matrix.GH_ACTIONS_ROLE_ARN_VAR && vars[matrix.GH_ACTIONS_ROLE_ARN_VAR] || secrets[matrix.GH_ACTIONS_ROLE_ARN_SECRET] }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: SAM Validate
@@ -92,7 +92,7 @@ jobs:
         if: matrix.ENABLED == 'true'
         uses: govuk-one-login/devplatform-upload-action@v3.9.2
         with:
-            artifact-bucket-name: ${{ secrets[matrix.ARTIFACT_SOURCE_BUCKET_NAME_SECRET] }}
+            artifact-bucket-name: ${{ matrix.ARTIFACT_SOURCE_BUCKET_NAME_VAR && vars[matrix.ARTIFACT_SOURCE_BUCKET_NAME_VAR] || secrets[matrix.ARTIFACT_SOURCE_BUCKET_NAME_SECRET] }}
             signing-profile-name: ""
             working-directory: ./txma
 
