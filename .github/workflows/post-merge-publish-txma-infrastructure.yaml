@@ -175,7 +175,7 @@ jobs:
         if: matrix.ENABLED == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets[matrix.GH_ACTIONS_ROLE_ARN_SECRET] }}
+          role-to-assume: ${{ matrix.GH_ACTIONS_ROLE_ARN_VAR && vars[matrix.GH_ACTIONS_ROLE_ARN_VAR] || secrets[matrix.GH_ACTIONS_ROLE_ARN_SECRET] }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: SAM Validate
