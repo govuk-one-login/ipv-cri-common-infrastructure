@@ -107,7 +107,7 @@ jobs:
     needs: publish_txma_to_matrix_dev
     strategy:
       matrix:
-        target: [ ADDRESS_BUILD, COMMON_BUILD, DL_BUILD, FRAUD_BUILD, HMRC_CHECK_BUILD, HMRC_KBV_BUILD, KBV_BUILD, PASSPORT_BUILD ]
+        target: [ ADDRESS_BUILD, COMMON_BUILD, DL_BUILD, FRAUD_BUILD, HMRC_CHECK_BUILD, HMRC_KBV_BUILD, KBV_BUILD, PASSPORT_BUILD, OB_BUILD ]
         include:
           - target: ADDRESS_BUILD
             ENABLED: "${{ vars.ADDRESS_BUILD_ENABLED }}"
