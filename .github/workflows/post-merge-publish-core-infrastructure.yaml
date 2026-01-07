@@ -13,7 +13,7 @@ jobs:
     environment: ${{ matrix.target }}
     strategy:
       matrix:
-        target: [ ADDRESS_DEV, COMMON_DEV, DL_DEV, FRAUD_DEV, HMRC_CHECK_DEV, HMRC_KBV_DEV, KBV_DEV, PASSPORT_DEV, IDSRE_DEV, CIC_DEV ]
+        target: [ ADDRESS_DEV, COMMON_DEV, DL_DEV, FRAUD_DEV, HMRC_CHECK_DEV, HMRC_KBV_DEV, KBV_DEV, PASSPORT_DEV, IDSRE_DEV, CIC_DEV, OB_DEV ]
         include:
           - target: ADDRESS_DEV
             ENABLED: "${{ vars.ADDRESS_DEV_ENABLED }}"
@@ -120,7 +120,7 @@ jobs:
     environment: ${{ matrix.target }}
     strategy:
       matrix:
-        target: [ ADDRESS_BUILD, COMMON_BUILD, DL_BUILD, FRAUD_BUILD, HMRC_CHECK_BUILD, HMRC_KBV_BUILD, KBV_BUILD, PASSPORT_BUILD, CIC_BUILD ]
+        target: [ ADDRESS_BUILD, COMMON_BUILD, DL_BUILD, FRAUD_BUILD, HMRC_CHECK_BUILD, HMRC_KBV_BUILD, KBV_BUILD, PASSPORT_BUILD, CIC_BUILD, OB_BUILD ]
         include:
           - target: ADDRESS_BUILD
             ENABLED: "${{ vars.ADDRESS_BUILD_ENABLED }}"
