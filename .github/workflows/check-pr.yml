@@ -12,6 +12,6 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Run pre-commit
-        uses: govuk-one-login/github-actions/code-quality/run-pre-commit@ac71be4023195de11f6cbcd07d56e6ab964e4e9e
+        uses: govuk-one-login/github-actions/code-quality/run-pre-commit@dc533fdf7254e2be498d804b43292c8f6e86844d
         with:
           all-files: true
