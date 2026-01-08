@@ -149,6 +149,7 @@ jobs:
 
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment: ${{ matrix.ENVIRONMENT }}
     env:
       AWS_REGION: eu-west-2
     permissions:
