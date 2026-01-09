@@ -35,7 +35,7 @@ Conditions:
   UsePermissionsBoundary: !Not [!Equals [!Ref PermissionsBoundary, ""]]
   DisableAlarm: !And
     - !Condition IsNotDevLikeEnvironment
-    - !Not [!Equals [!Ref DisableForOB, false]]
+    - !Equals [!Ref DisableForOB, false]
 
 Mappings:
   TxMARootMapping:
