@@ -16,6 +16,13 @@ Parameters:
     Description: "Link to the CRI specific support manual"
     Type: String
     Default: 'https://govukverify.atlassian.net/wiki/spaces/OJ/pages/3303931965/CRI+specific+support'
+  DisableForOB:
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: Disable resources for OB initial deployment 
+    Default: 'true'
 
 Conditions:
   IsDevEnvironment: !Equals [!Ref Environment, dev]
@@ -26,6 +33,9 @@ Conditions:
   IsNotDevLikeEnvironment: !Not
     - !Condition IsDevLikeEnvironment
   UsePermissionsBoundary: !Not [!Equals [!Ref PermissionsBoundary, ""]]
+  DisableAlarm: !And
+    - !Condition IsNotDevLikeEnvironment
+    - !Not [!Equals [!Ref DisableForOB, false]]
 
 Mappings:
   TxMARootMapping:
@@ -192,7 +202,7 @@ Resources:
 
   AuditEventSQSOldMessagesAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: IsNotDevLikeEnvironment
+    Condition: DisableAlarm
     Properties:
       AlarmName: !Sub "${AWS::StackName}-AuditEventStayedOnQueueForMoreThan24HoursMessagesAlarm"
       AlarmDescription: !Sub "Triggers CloudWatch Alarm when a message has stayed on the queue for more than 24 Hours ${SupportManualURL}"
@@ -217,7 +227,7 @@ Resources:
 
   AuditEventDLQMessagesVisibleAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: IsNotDevLikeEnvironment
+    Condition: DisableAlarm
     Properties:
       AlarmName: !Sub "${AWS::StackName}-AuditEventDLQMessagesVisibleAlarm"
       AlarmDescription: !Sub "Triggers CloudWatch Alarm when message gets added to audit event DLQ. ${SupportManualURL}"
