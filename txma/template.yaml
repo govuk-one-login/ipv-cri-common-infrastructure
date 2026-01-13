@@ -33,7 +33,7 @@ Conditions:
   ServiceNameNotOb: !Not [!Equals [!Ref ServiceName, "ob"]]
   DisableAlarm: !And
     - !Condition IsNotDevLikeEnvironment
-    - !Condition ServiceNameNotObv
+    - !Condition ServiceNameNotOb
 
 Mappings:
   TxMARootMapping:
