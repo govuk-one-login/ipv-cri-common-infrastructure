@@ -16,13 +16,10 @@ Parameters:
     Description: "Link to the CRI specific support manual"
     Type: String
     Default: 'https://govukverify.atlassian.net/wiki/spaces/OJ/pages/3303931965/CRI+specific+support'
-  DisableForOB:
+  ServiceName:
+    Description: Provide a service name to enable naming convention patterns
     Type: String
-    AllowedValues:
-      - 'true'
-      - 'false'
-    Description: Disable resources for OB initial deployment 
-    Default: 'true'
+    Default: "none"
 
 Conditions:
   IsDevEnvironment: !Equals [!Ref Environment, dev]
@@ -33,9 +30,10 @@ Conditions:
   IsNotDevLikeEnvironment: !Not
     - !Condition IsDevLikeEnvironment
   UsePermissionsBoundary: !Not [!Equals [!Ref PermissionsBoundary, ""]]
+  ServiceNameNotOb: !Not [!Equals [!Ref ServiceName, "ob"]]
   DisableAlarm: !And
     - !Condition IsNotDevLikeEnvironment
-    - !Equals [!Ref DisableForOB, false]
+    - !Condition ServiceNameNotObv
 
 Mappings:
   TxMARootMapping:
