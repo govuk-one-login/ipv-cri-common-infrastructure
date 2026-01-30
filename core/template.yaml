@@ -125,33 +125,6 @@ Resources:
       Description: Api key 2
       Enabled: true
 
-  AlarmTopic:
-    Type: AWS::SNS::Topic
-
-  AlarmTopicSubscriptionPagerDuty:
-    Type: AWS::SNS::Subscription
-    Properties:
-      TopicArn: !Ref AlarmTopic
-      Endpoint: "{{resolve:ssm:/alerting/pagerduty/url}}"
-      Protocol: https
-
-  AlarmPublishToTopicPolicy:
-    Type: AWS::SNS::TopicPolicy
-    Properties:
-      Topics:
-        - !Ref AlarmTopic
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Action: sns:Publish
-            Resource: !Ref AlarmTopic
-            Principal:
-              Service: cloudwatch.amazonaws.com
-            Condition:
-              ArnLike:
-                AWS:SourceArn: !Sub arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:*
-
   PublishedKeysS3Bucket:
     Type: AWS::S3::Bucket
     # checkov:skip=CKV_AWS_18: "Ensure the S3 bucket has access logging enabled"
@@ -572,12 +545,6 @@ Outputs:
     Value: !Ref ApiKey2
     Export:
       Name: !Sub ${AWS::StackName}-ApiKey2
-
-  AlarmTopic:
-    Description: "Alarm SNS Topic"
-    Value: !Ref AlarmTopic
-    Export:
-      Name: !Sub ${AWS::StackName}-AlarmTopic
 
   PublishedKeysS3BucketName:
     Value: !Ref PublishedKeysS3Bucket
