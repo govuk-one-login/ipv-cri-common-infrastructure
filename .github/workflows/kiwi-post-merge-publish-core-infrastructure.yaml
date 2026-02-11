@@ -41,7 +41,7 @@ jobs:
 
       - name: Setup Python
         if: ${{ steps.checkout.conclusion == 'success' }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11.2
 
@@ -112,7 +112,7 @@ jobs:
 
       - name: Setup Python
         if: ${{ steps.checkout.conclusion == 'success' }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11.2
 
