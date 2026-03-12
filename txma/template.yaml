@@ -20,6 +20,10 @@ Parameters:
     Description: Provide a service name to enable naming convention patterns
     Type: String
     Default: "none"
+  BuildNotificationStackName:
+    Description: The topic to send key rotation bucket access notifications to
+    Type: String
+    Default: "none"
 
 Conditions:
   IsDevEnvironment: !Equals [!Ref Environment, dev]
@@ -30,10 +34,6 @@ Conditions:
   IsNotDevLikeEnvironment: !Not
     - !Condition IsDevLikeEnvironment
   UsePermissionsBoundary: !Not [!Equals [!Ref PermissionsBoundary, ""]]
-  ServiceNameNotOb: !Not [!Equals [!Ref ServiceName, "ob"]]
-  DisableAlarm: !And
-    - !Condition IsNotDevLikeEnvironment
-    - !Condition ServiceNameNotOb
 
 Mappings:
   TxMARootMapping:
@@ -200,15 +200,15 @@ Resources:
 
   AuditEventSQSOldMessagesAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: DisableAlarm
+    Condition: IsNotDevLikeEnvironment
     Properties:
       AlarmName: !Sub "${AWS::StackName}-AuditEventStayedOnQueueForMoreThan24HoursMessagesAlarm"
       AlarmDescription: !Sub "Triggers CloudWatch Alarm when a message has stayed on the queue for more than 24 Hours ${SupportManualURL}"
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-warning-alert-topic
+        - Fn::ImportValue: !Sub "${BuildNotificationStackName}-WarningAlertsTopicArn"
       AlarmActions:
-        - !ImportValue platform-alarm-warning-alert-topic
+        - Fn::ImportValue: !Sub "${BuildNotificationStackName}-WarningAlertsTopicArn"
       InsufficientDataActions: [ ]
       MetricName: ApproximateAgeOfOldestMessage
       Namespace: AWS/SQS
@@ -225,15 +225,15 @@ Resources:
 
   AuditEventDLQMessagesVisibleAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: DisableAlarm
+    Condition: IsNotDevLikeEnvironment
     Properties:
       AlarmName: !Sub "${AWS::StackName}-AuditEventDLQMessagesVisibleAlarm"
       AlarmDescription: !Sub "Triggers CloudWatch Alarm when message gets added to audit event DLQ. ${SupportManualURL}"
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-warning-alert-topic
+        - Fn::ImportValue: !Sub "${BuildNotificationStackName}-WarningAlertsTopicArn"
       AlarmActions:
-        - !ImportValue platform-alarm-warning-alert-topic
+        - Fn::ImportValue: !Sub "${BuildNotificationStackName}-WarningAlertsTopicArn"
       InsufficientDataActions: [ ]
       Metrics:
         - Expression: "max-min"
