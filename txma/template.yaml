@@ -21,7 +21,7 @@ Parameters:
     Type: String
     Default: "none"
   BuildNotificationStackName:
-    Description: The topic to send key rotation bucket access notifications to
+    Description: The topic to publish notification and sns alerts
     Type: String
     Default: "none"
 
