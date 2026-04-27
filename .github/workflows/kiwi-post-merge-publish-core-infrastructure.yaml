@@ -52,7 +52,7 @@ jobs:
       - name: Assume temporary AWS role
         id: setup-aws-role
         if: ${{ steps.checkout.conclusion == 'success' }}
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ vars[format('{0}_CORE_GH_ACTIONS_ROLE_ARN', matrix.target)] }}
           aws-region: ${{ env.AWS_REGION }}
@@ -123,7 +123,7 @@ jobs:
       - name: Assume temporary AWS role
         id: setup-aws-role
         if: ${{ steps.checkout.conclusion == 'success' }}
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ vars[format('{0}_CORE_GH_ACTIONS_ROLE_ARN', matrix.target)] }}
           aws-region: ${{ env.AWS_REGION }}
