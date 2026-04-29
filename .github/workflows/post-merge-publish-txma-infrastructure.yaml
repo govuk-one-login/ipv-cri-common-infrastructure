@@ -158,9 +158,9 @@ jobs:
 
       - name: Setup Python
         if: matrix.ENABLED == 'true'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
-          python-version: 3.11.2
+          python-version: 3.12
 
       - name: Get latest cfn-lint
         if: matrix.ENABLED == 'true'
@@ -168,9 +168,9 @@ jobs:
 
       - name: Setup SAM
         if: matrix.ENABLED == 'true'
-        uses: aws-actions/setup-sam@v2
+        uses: aws-actions/setup-sam@f84ec7d548307efafe33230528756de3c5841a17
         with:
-          version: 1.74.0
+          version: 1.158.0
 
       - name: Assume temporary AWS role
         if: matrix.ENABLED == 'true'
