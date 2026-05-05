@@ -15,3 +15,14 @@ jobs:
         uses: govuk-one-login/github-actions/code-quality/run-pre-commit@dc533fdf7254e2be498d804b43292c8f6e86844d
         with:
           all-files: true
+
+  run-unit-tests-publish-key-fn:
+    name: Run unit tests (publish key function)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run tests
+        uses: govuk-one-login/github-actions/node/run-script@cfdec064a0b8d033516eba4999ed35578b262f0a
+        with:
+          working-directory: core/publish-key
+          node-version-file: core/publish-key/.nvmrc
+          script: npm run test:coverage
