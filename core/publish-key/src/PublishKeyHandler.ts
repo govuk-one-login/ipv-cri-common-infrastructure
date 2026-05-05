@@ -5,7 +5,7 @@ import { Jwk, Jwks } from "../types/Keys";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { KMSClient, GetPublicKeyCommand, GetPublicKeyCommandOutput } from "@aws-sdk/client-kms";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
-import crypto from "node:crypto";
+import { createHash, createPublicKey } from "node:crypto";
 
 export const logger = new Logger({ serviceName: "PublishKeyHandler" });
 
@@ -95,18 +95,16 @@ export class PublishKeyHandler implements LambdaInterface {
     }
 
     private convertToJwk(kmsKeyOutput: GetPublicKeyCommandOutput): Jwk {
-        const publicKey: crypto.JsonWebKey = crypto
-            .createPublicKey({
-                key: kmsKeyOutput.PublicKey as Buffer,
-                type: "spki",
-                format: "der",
-            })
-            .export({ format: "jwk" });
+        const publicKey = createPublicKey({
+            key: kmsKeyOutput.PublicKey as Buffer,
+            type: "spki",
+            format: "der",
+        }).export({ format: "jwk" });
 
         return {
             ...publicKey,
             use: "enc",
-            kid: crypto.createHash("sha256").update(this.decryptionKeyID).digest().toString("hex"),
+            kid: createHash("sha256").update(this.decryptionKeyID).digest().toString("hex"),
             alg: "RSA-OAEP-256",
         } as Jwk;
     }

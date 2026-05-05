@@ -1,21 +1,23 @@
 import { PublishKeyHandler } from "../src/PublishKeyHandler";
-import { expect, jest } from "@jest/globals";
-import { AwsError, mockClient } from "aws-sdk-client-mock";
-import "aws-sdk-client-mock-jest";
+import { mockClient } from "aws-sdk-client-mock";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GetPublicKeyCommand, GetPublicKeyCommandOutput, KMSClient } from "@aws-sdk/client-kms";
-import { PutObjectCommand, PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Jwk } from "../types/Keys";
 import { Context } from "aws-lambda";
 import { JsonWebKey } from "node:crypto";
+import("aws-sdk-client-mock-vitest/extend");
 
-jest.mock("@aws-lambda-powertools/logger", () => ({
-    Logger: jest.fn().mockImplementation(() => ({
-        info: (x: any) => console.log(x),
-        debug: (x: any) => console.log(x),
-    })),
+vi.mock("@aws-lambda-powertools/logger", () => ({
+    Logger: vi.fn().mockImplementation(function () {
+        return {
+            info: (x: any) => console.log(x),
+            debug: (x: any) => console.log(x),
+        };
+    }),
 }));
 
-jest.mock("node:crypto", () => ({
+vi.mock("node:crypto", () => ({
     createPublicKey: () => {
         return {
             export: () => {
@@ -65,7 +67,7 @@ const validGetPublicKeyCommandOutput: GetPublicKeyCommandOutput = {
     KeyUsage: "ENCRYPT_DECRYPT",
     PublicKey: Buffer.from("Key"),
 };
-const validPutObjectCommandInput: PutObjectCommandInput = {
+const validPutObjectCommandInput = {
     Bucket: bucketName,
     Key: "jwks.json",
     Body: JSON.stringify({
@@ -90,7 +92,7 @@ describe("Tests", () => {
             const result: string | undefined = await publishKeyHandler.handler(validEvent, validContext);
 
             expect(result).toEqual("Success");
-            expect(s3Mock).toHaveReceivedNthCommandWith(1, PutObjectCommand, validPutObjectCommandInput);
+            expect(s3Mock).toHaveReceivedNthCommandWith(PutObjectCommand, 1, validPutObjectCommandInput);
         });
 
         it("Shouldn't parse keys that are with usage that is not ENCRYPT_DECRYPT", async () => {
