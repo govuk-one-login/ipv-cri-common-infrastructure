@@ -259,7 +259,7 @@ Resources:
       Handler: src/PublishKeyHandler.lambdaHandler
       FunctionName: !Sub "${AWS::StackName}-publishKey"
       Timeout: 30
-      Runtime: nodejs20.x
+      Runtime: nodejs24.x
       Architectures: [arm64]
       Environment:
         Variables:
