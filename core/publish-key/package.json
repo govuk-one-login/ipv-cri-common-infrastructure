@@ -1,6 +1,7 @@
 {
     "name": "publish-key",
     "description": "",
+    "type": "module",
     "scripts": {
         "format": "prettier -c .",
         "format:fix": "prettier -w .",
@@ -20,6 +21,7 @@
         "esbuild": "0.28.1"
     },
     "devDependencies": {
+        "@tsconfig/node24": "^24.0.4",
         "@types/aws-lambda": "8.10.149",
         "@types/node": "24.0.3",
         "@typescript-eslint/eslint-plugin": "8.35.1",
