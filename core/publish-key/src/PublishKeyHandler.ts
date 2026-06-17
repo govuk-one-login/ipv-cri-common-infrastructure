@@ -61,7 +61,7 @@ export class PublishKeyHandler implements LambdaInterface {
 
             return "Success";
         } catch (error) {
-            throw new Error(`Unable to create JWKS file: ${this.normaliseError(error)}`);
+            throw new Error(`Unable to create JWKS file: ${this.normaliseError(error)}`, { cause: error });
         }
     }
 
@@ -77,7 +77,7 @@ export class PublishKeyHandler implements LambdaInterface {
 
             await this.s3Client.send(new PutObjectCommand(uploadParams));
         } catch (error) {
-            throw new Error(`Failed to save to S3: ${this.normaliseError(error)}`);
+            throw new Error(`Failed to save to S3: ${this.normaliseError(error)}`, { cause: error });
         }
     }
 
@@ -90,7 +90,7 @@ export class PublishKeyHandler implements LambdaInterface {
             }
             return decryptionKey;
         } catch (error) {
-            throw new Error(`Failed to fetch key from KMS: ${this.normaliseError(error)}`);
+            throw new Error(`Failed to fetch key from KMS: ${this.normaliseError(error)}`, { cause: error });
         }
     }
 
