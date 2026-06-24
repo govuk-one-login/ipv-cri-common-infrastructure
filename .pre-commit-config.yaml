@@ -7,7 +7,15 @@ repos:
       - id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
   - repo: https://github.com/aws-cloudformation/cfn-lint
-    rev: v1.49.2
+    rev: v1.51.5
     hooks:
       - id: cfn-lint
         files: .template\.ya?ml$
+  - repo: local
+    hooks:
+      - id: eslint
+        name: ESLint
+        language: system
+        files: .[jt]sx?$
+        pass_filenames: false
+        entry: bash -c 'cd core/publish-key && npm run lint'

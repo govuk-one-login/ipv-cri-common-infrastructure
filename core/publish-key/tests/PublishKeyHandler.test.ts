@@ -1,9 +1,9 @@
-import { PublishKeyHandler } from "../src/PublishKeyHandler";
+import { PublishKeyHandler } from "../src/PublishKeyHandler.js";
 import { mockClient } from "aws-sdk-client-mock";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GetPublicKeyCommand, GetPublicKeyCommandOutput, KMSClient } from "@aws-sdk/client-kms";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { Jwk } from "../types/Keys";
+import { Jwk } from "../types/Keys.js";
 import { Context } from "aws-lambda";
 import { JsonWebKey } from "node:crypto";
 import("aws-sdk-client-mock-vitest/extend");
@@ -11,8 +11,8 @@ import("aws-sdk-client-mock-vitest/extend");
 vi.mock("@aws-lambda-powertools/logger", () => ({
     Logger: vi.fn().mockImplementation(function () {
         return {
-            info: (x: any) => console.log(x),
-            debug: (x: any) => console.log(x),
+            info: (x: string | Record<string, unknown>) => console.log(x),
+            debug: (x: string | Record<string, unknown>) => console.log(x),
         };
     }),
 }));

@@ -11,9 +11,24 @@ jobs:
       group: pre-commit-${{ github.head_ref || github.ref_name }}
       cancel-in-progress: true
     steps:
-      - name: Run pre-commit
-        uses: govuk-one-login/github-actions/code-quality/run-pre-commit@dc533fdf7254e2be498d804b43292c8f6e86844d
+      - name: Pull repository
+        uses: actions/checkout@v6
+
+      - name: Set up node
+        uses: actions/setup-node@v6
         with:
+          cache-dependency-path: core/publish-key/package-lock.json
+          node-version-file: core/publish-key/.nvmrc
+          cache: npm
+
+      - name: Install npm dependencies
+        working-directory: core/publish-key
+        run: npm ci
+
+      - name: Run pre-commit
+        uses: govuk-one-login/github-actions/code-quality/run-pre-commit@350c58b28e56f0fd67c4a8d8c8cd4fdc6355bdf3
+        with:
+          pull-repository: false
           all-files: true
 
   run-unit-tests-publish-key-fn:
