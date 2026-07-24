@@ -37,7 +37,7 @@ jobs:
       - name: Checkout code
         id: checkout
         if: matrix.ENABLED == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python
         if: matrix.ENABLED == 'true'
@@ -114,7 +114,7 @@ jobs:
       - name: Checkout code
         id: checkout
         if: matrix.ENABLED == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python
         if: matrix.ENABLED == 'true'
