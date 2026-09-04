@@ -250,7 +250,7 @@ Resources:
       BuildMethod: esbuild
       BuildProperties:
         Minify: true
-        Target: "es2020"
+        Target: "es2024"
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - src/PublishKeyHandler.ts
@@ -259,7 +259,7 @@ Resources:
       Handler: src/PublishKeyHandler.lambdaHandler
       FunctionName: !Sub "${AWS::StackName}-publishKey"
       Timeout: 30
-      Runtime: nodejs20.x
+      Runtime: nodejs24.x
       Architectures: [arm64]
       Environment:
         Variables:

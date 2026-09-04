@@ -1,16 +1,9 @@
 {
+    "extends": "@tsconfig/node24/tsconfig.json",
     "compilerOptions": {
-        "experimentalDecorators": true,
-        "target": "es2022",
-        "strict": true,
         "preserveConstEnums": true,
         "sourceMap": true,
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "esModuleInterop": true,
-        "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "types": ["jest", "node", "aws-lambda"],
         "outDir": "./build/",
         "noImplicitAny": true
     },

@@ -11,3 +11,5 @@ node_modules/
 
 # Ignore build output directory
 build
+
+**/.DS_Store
