@@ -333,7 +333,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-${PublishKeyFunction}"
-      RetentionInDays: 30
+      RetentionInDays: 365
 
   PublishedKeysS3BucketLogGroup:
     Type: AWS::Logs::LogGroup
@@ -343,7 +343,7 @@ Resources:
         - "-"
         - - !Ref PublishedKeysS3Bucket
           - "logs"
-      RetentionInDays: 30
+      RetentionInDays: 365
 
   PublishedKeysLogsBucket:
     Type: AWS::S3::Bucket
