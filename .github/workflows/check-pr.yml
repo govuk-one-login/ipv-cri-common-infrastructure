@@ -12,10 +12,10 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Pull repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           cache-dependency-path: core/publish-key/package-lock.json
           node-version-file: core/publish-key/.nvmrc
@@ -26,7 +26,7 @@ jobs:
         run: npm ci
 
       - name: Run pre-commit
-        uses: govuk-one-login/github-actions/code-quality/run-pre-commit@350c58b28e56f0fd67c4a8d8c8cd4fdc6355bdf3
+        uses: govuk-one-login/github-actions/code-quality/run-pre-commit@b5f4f92a0692bf297b08c43745e545e45631f0ee
         with:
           pull-repository: false
           all-files: true
@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run tests
-        uses: govuk-one-login/github-actions/node/run-script@cfdec064a0b8d033516eba4999ed35578b262f0a
+        uses: govuk-one-login/github-actions/node/run-script@b5f4f92a0692bf297b08c43745e545e45631f0ee
         with:
           working-directory: core/publish-key
           node-version-file: core/publish-key/.nvmrc
