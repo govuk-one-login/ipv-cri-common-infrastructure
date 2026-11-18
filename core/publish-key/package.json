@@ -16,7 +16,7 @@
         "@aws-lambda-powertools/commons": "2.20.0",
         "@aws-lambda-powertools/logger": "2.20.0",
         "@aws-sdk/client-kms": "3.981.0",
-        "@aws-sdk/client-s3": "3.981.0",
+        "@aws-sdk/client-s3": "3.1044.0",
         "@smithy/node-http-handler": "4.0.4",
         "esbuild": "0.28.1"
     },
